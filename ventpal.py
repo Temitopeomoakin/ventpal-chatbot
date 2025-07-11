@@ -8,7 +8,6 @@ import hashlib
 import os
 import random
 import re
-import asyncio
 import unicodedata
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 from datetime import datetime
@@ -667,8 +666,8 @@ Remember: Keep total response ≤ 120 words. Sound human, not robotic. Build on 
 
     return prompt
 
-async def generate_response_async(prompt: str, context: str = "", temperature: float = 0.7, max_tokens: int = 150) -> str:
-    """Generate response using async HuggingFace client for better performance."""
+def generate_response(prompt: str, context: str = "", temperature: float = 0.7, max_tokens: int = 150) -> str:
+    """Generate response using HuggingFace client with proper error handling."""
     if not HUGGINGFACE_API_KEY:
         return "I apologize, but I'm currently unable to generate responses due to missing API configuration."
     
@@ -683,9 +682,8 @@ async def generate_response_async(prompt: str, context: str = "", temperature: f
             # Build the therapist-quality prompt
             full_prompt = build_therapist_prompt(prompt, context, temperature)
             
-            # Use async call for better performance
-            completion = await asyncio.to_thread(
-                client.chat.completions.create,
+            # Use synchronous call (simpler and more reliable)
+            completion = client.chat.completions.create(
                 model=MODEL_NAME,
                 messages=[
                     {
@@ -710,42 +708,13 @@ async def generate_response_async(prompt: str, context: str = "", temperature: f
             
             return response
             
-        except asyncio.TimeoutError:
-            if attempt < max_retries:
-                wait_time = base_wait * (2 ** attempt)
-                await asyncio.sleep(wait_time)
-                continue
-            else:
-                return "I apologize, but Scout is taking longer than expected. Please try again in a moment."
         except Exception as e:
             if attempt < max_retries:
                 wait_time = base_wait * (2 ** attempt)
-                await asyncio.sleep(wait_time)
+                time.sleep(wait_time)
                 continue
             else:
-                return f"I apologize, but Scout is busy right now. Please try again in a moment. Error: {str(e)}"
-
-def generate_response(prompt: str, context: str = "", temperature: float = 0.7, max_tokens: int = 150) -> str:
-    """Synchronous wrapper for async response generation with proper event loop handling."""
-    try:
-        loop = asyncio.get_event_loop_policy().get_event_loop()
-        if loop.is_running():
-            # If we're already in an event loop, run in a thread to avoid blocking
-            import concurrent.futures
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(asyncio.run, generate_response_async(prompt, context, temperature, max_tokens))
-                return future.result()
-        else:
-            return loop.run_until_complete(generate_response_async(prompt, context, temperature, max_tokens))
-    except Exception as e:
-        # Fallback for any event loop issues
-        return f"I apologize, but I'm having trouble connecting right now. Please try again. Error: {str(e)}"
-
-def stream_chunks(text: str):
-    """Stream text chunks for typing animation effect."""
-    words = text.split()
-    for i in range(len(words)):
-        yield " ".join(words[:i+1]) + " "
+                return f"I apologize, but I'm having trouble connecting right now. Please try again in a moment."
 
 def get_user_conversation(user_id: str) -> List[Dict[str, str]]:
     """Get conversation history for a user (session-based for GDPR compliance)."""
@@ -964,8 +933,8 @@ def main():
                     # Update skill tracking and get detected skill
                     response, detected_skill = update_skill_tracking(response)
                     
-                    # Display response with typing animation
-                    st.write_stream(stream_chunks(response))
+                    # Display response (removed streaming for now)
+                    st.markdown(response)
                     
                     # Add assistant message to conversation
                     conversation.append({
