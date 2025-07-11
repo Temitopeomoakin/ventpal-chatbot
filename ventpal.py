@@ -773,7 +773,7 @@ def main():
     # Header
     st.markdown("""
     <div class="main-header">
-        <h1>🤖 VentPal - Mental Health Support</h1>
+        <h1>💨 VentPal - Mental Health Support</h1>
         <p>Your empathetic CBT-informed companion</p>
     </div>
     """, unsafe_allow_html=True)
