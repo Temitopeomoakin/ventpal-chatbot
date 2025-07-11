@@ -1,0 +1,3 @@
+[source_pdf: worry_final.txt] [therapy_type: CBT] [subtype: Worry Management (Alternate)] [audience: General Adult] [language: en]
+worry_final
+If you still worry when you do have access, you can do something about that worry so it would become a practical worry. 8

@@ -20,7 +20,7 @@ from huggingface_hub import InferenceClient
 # Page configuration
 st.set_page_config(
     page_title="VentPal - Mental Health Support",
-    page_icon="",
+    page_icon="💨",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -69,16 +69,6 @@ st.markdown("""
         font-style: italic;
         margin-top: 0.5rem;
     }
-    .skill-badge {
-        display: inline-block;
-        padding: 0.2rem 0.5rem;
-        border-radius: 12px;
-        font-size: 0.7rem;
-        background-color: #e8f5e8;
-        color: #2e7d32;
-        margin-top: 0.5rem;
-        border: 1px solid #c8e6c9;
-    }
     .typing-indicator {
         display: inline-block;
         animation: pulse 1.5s infinite;
@@ -87,6 +77,15 @@ st.markdown("""
         0% { opacity: 1; }
         50% { opacity: 0.5; }
         100% { opacity: 1; }
+    }
+    .skill-badge {
+        display: inline-block;
+        background: #e8f5e8;
+        color: #2e7d32;
+        padding: 0.2rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        margin-top: 0.5rem;
     }
     .tooltip {
         position: relative;
@@ -140,16 +139,19 @@ if "memory" not in st.session_state:
     st.session_state.memory = ConversationBufferMemory(
         memory_key="chat_history",
         return_messages=True,
-        max_token_limit=1024  # Reduced for Llama tokenizer compatibility
+        max_token_limit=2000  # Limit memory to prevent token overflow
     )
 if "recent_cues" not in st.session_state:
     st.session_state.recent_cues = []
-if "recent_skills" not in st.session_state:
-    st.session_state.recent_skills = []
+if "used_skills" not in st.session_state:
+    st.session_state.used_skills = []
+if "last_skill" not in st.session_state:
+    st.session_state.last_skill = ""
 if "conversation_backup" not in st.session_state:
-    st.session_state.conversation_backup = None
-if "last_skill_offered" not in st.session_state:
-    st.session_state.last_skill_offered = None
+    st.session_state.conversation_backup = []
+
+# Set deterministic random seed for consistent micro-cue ordering
+random.seed(st.session_state.user_id)
 
 # Configuration - now from secrets where possible
 HUGGINGFACE_API_KEY = st.secrets.get("HUGGINGFACE_API_KEY", "")
@@ -158,13 +160,7 @@ EMBEDDING_MODEL = st.secrets.get("EMBEDDING_MODEL", "sentence-transformers/all-M
 VECTOR_DB_PATH = st.secrets.get("VECTOR_DB_PATH", "vector_db")
 MAX_REQUESTS_PER_HOUR = st.secrets.get("MAX_REQUESTS_PER_HOUR", 50)
 
-# World-class prompt templates
-SYSTEM_PROMPT = """You are VentPal, a mental health companion trained in evidence-based Cognitive Behavioural Therapy (CBT).  
-Primary goal: relieve distress in a single turn while building rapport for the next turn.  
-Secondary goal: teach one CBT micro-skill at a time, only if user is ready.  
-You are NOT a medical professional and never prescribe or diagnose."""
-
-# Micro-cue library (50 items, grouped by use-case)
+# Enhanced micro-cue library (50 items, grouped by use-case)
 CUE_GROUPS = {
     "start": [
         "Hi there.", "Nice to meet you.", "Glad you're here.", "Welcome."
@@ -181,106 +177,110 @@ CUE_GROUPS = {
         "That's a big step!", "I love that.", "Nice work.", "That's encouraging.", 
         "You're making progress."
     ],
-    "insight_reflection": [
+    "user_reflects": [
         "That's an important realisation.", "That makes sense.", "I see what you mean.", 
         "Good observation.", "That's a useful way to look at it."
     ],
-    "feeling_stuck": [
+    "user_stuck": [
         "Let's slow it down.", "One step at a time.", "We can figure this out together.", 
         "Let's unpack that.", "We can sit with it for a moment."
     ],
-    "asking_strategy": [
+    "offering_strategy": [
         "Here's something that might help.", "Want to try a quick exercise?", 
         "Can I share a technique?", "Would you like a tool for that?", 
         "We could test a small idea."
     ],
-    "encouraging_action": [
+    "encouraging": [
         "You've got this.", "I'm rooting for you.", "You're not alone in this.", 
         "I believe in your ability.", "You can handle this."
     ],
     "crisis_safety": [
         "Your safety matters most.", "I'm concerned about you.", "Let's keep you safe first."
     ],
-    "neutral_filler": [
+    "neutral": [
         "Mmm-hmm.", "Uh-huh.", "I hear you."
     ]
 }
 
-# Flatten for fallback
-ALL_CUES = [cue for group in CUE_GROUPS.values() for cue in group]
+# Enhanced CBT Micro-skills with regex patterns for tracking
+CBT_SKILLS = {
+    "breathing": {
+        "name": "Deep Breathing",
+        "description": "4-6 breathing technique",
+        "patterns": [r"deep ?breath", r"4-?6 ?breath", r"breathing ?exercise", r"inhale.*exhale"]
+    },
+    "grounding": {
+        "name": "5-4-3-2-1 Grounding",
+        "description": "Sensory grounding technique",
+        "patterns": [r"5-?4-?3-?2-?1", r"grounding", r"five ?senses", r"sensory.*technique"]
+    },
+    "thought_challenging": {
+        "name": "Thought Challenging",
+        "description": "Cognitive restructuring",
+        "patterns": [r"thought.*challenge", r"cognitive.*restructur", r"reframe", r"alternative.*thought"]
+    },
+    "behavioral_activation": {
+        "name": "Behavioral Activation",
+        "description": "Activity scheduling",
+        "patterns": [r"behavioral.*activation", r"activity.*schedul", r"small.*step", r"gradual.*exposure"]
+    },
+    "mindfulness": {
+        "name": "Mindfulness",
+        "description": "Present moment awareness",
+        "patterns": [r"mindful", r"present.*moment", r"observe.*thought", r"non-?judgment"]
+    },
+    "progressive_relaxation": {
+        "name": "Progressive Relaxation",
+        "description": "Muscle relaxation technique",
+        "patterns": [r"progressive.*relax", r"muscle.*tension", r"body.*scan", r"relaxation.*technique"]
+    }
+}
 
-STYLE_PROMPT = """### VENTPAL STYLE GUIDE (v3)
+# Enhanced crisis detection patterns
+CRISIS_PATTERNS = [
+    r"kill.*myself", r"suicide", r"want.*die", r"end.*life", r"hurt.*myself",
+    r"self.*harm", r"cut.*myself", r"overdose", r"take.*pills", r"jump.*off",
+    r"hang.*myself", r"shoot.*myself", r"drown.*myself", r"burn.*myself"
+]
 
-You are "VentPal", an empathetic CBT-informed companion. Speak in first-person singular with contractions; total reply ≤120 words.
+# World-class prompt templates
+SYSTEM_PROMPT = """You are VentPal, a mental health companion trained in evidence-based Cognitive Behavioural Therapy (CBT).  
+Primary goal: relieve distress in a single turn while building rapport for the next turn.  
+Secondary goal: teach one CBT micro-skill at a time, only if user is ready.  
+You are NOT a medical professional and never prescribe or diagnose."""
 
-**Required structure each non-crisis turn**
-
-1  **Validation** (≤15 words)  
-   • Paraphrase the user's feeling; include *one* micro-cue from MICRO_CUE_PLACEHOLDER.
-
-2  **Exploration** (≤20 words)  
-   • Ask **exactly one** open question that logically follows the conversation flow.  
-   • This question ends the message (only one "?" in the whole reply).
-
-3  **Offer** (optional, ≤40 words)  
-   • If appropriate, offer **one** CBT micro-skill not in USED_SKILLS_PLACEHOLDER.  
-   • Mention it concretely, e.g. "Would you like to try a 5-4-3-2-1 grounding?"
-
-**Crisis override**
-
-If the latest user message shows self-harm intent, replace the above with the UK crisis block:
-
-🚨 I'm really sorry you're feeling like this—it sounds unbearably painful.
-If you feel you might act on these thoughts right now, please call 999 or go to A&E.
-If you can keep yourself safe for a few minutes, you could also contact:
-• Samaritans 116 123 (24/7)
-• Shout – text SHOUT to 85258
-• NHS 111 for urgent advice
-
-Are you able to stay safe for the next few minutes?
-
-…and **stop**; wait for user response before continuing.
-
-**Diversity rules**
-
-* Do **not** reuse the same micro-cue or the same CBT skill you used in the last two replies.  
-* Vary sentence openings; avoid starting two consecutive messages with "I'm".
-
-**Safety rules**
-
-* No diagnosis, no medication advice, no policy talk, no links.  
-* Hide internal labels (e.g., "Neutral", "Anxiety") from the user."""
+STYLE_PROMPT = """• Always speak in first-person singular ("I", "me", "we can…")  
+• Use contractions (you're, it's) and everyday vocabulary.  
+• Keep replies ≤ 120 words → feel like chat, not essay.  
+• Follow the trio:  
+  1. Validation (acknowledge feeling)  
+  2. Exploration (open question OR gentle reflection)  
+  3. Offer (one micro-skill or tiny suggestion (optional), ≤ 40 words.  
+• Insert a micro back-channel every 2–3 replies ("I'm with you…", "Mmm-hmm…")  
+• Finish with exactly **one** open question unless user asked for facts only.
+• Remember previous context and build on earlier conversations."""
 
 SAFETY_PROMPT = """If user expresses self-harm or suicidal intent:
-    ➊ Acknowledge the pain ("I'm really sorry you're feeling like this...")  
-    ➋ Show UK crisis resources (999, Samaritans 116 123, Shout 85258, NHS 111)  
-    ➌ Ask safety check: "Are you able to stay safe for the next few minutes?"
-    ➍ Stop CBT content; wait for user response before continuing.
+    ➊ Acknowledge the pain ("I'm really sorry you're feeling…")  
+    ➋ Encourage immediate professional help (show crisis numbers)  
+    ➌ Stop CBT content; wait for user response before continuing.
 
 If you are unsure whether content is safe → ask a clarifying question first.
 Never mention policy or guidelines."""
 
-# CBT micro-skills library with regex patterns for better tracking
-CBT_SKILLS = {
-    "grounding": "Would you like to try a 5-4-3-2-1 grounding exercise with me?",
-    "breathing": "A slow 4-second inhale, 1-second pause, 6-second exhale can calm the body quickly.",
-    "thought_label": "Sometimes naming a thought 'just a thought' can shrink its power—wanna give it a go?",
-    "suds_scale": "On a 0–10 scale, how strong is the feeling right now?",
-    "behavioral_activation": "Choosing one small activity you normally enjoy—even if mood says no—can nudge things.",
-    "cognitive_restructuring": "What's the evidence for and against that thought?",
-    "mindfulness": "Can you notice what's happening in your body right now, without trying to change it?"
-}
-
-# Skill patterns for better tracking (handles paraphrasing)
-SKILL_PATTERNS = {
-    "breathing": [r"deep ?breath", r"4-?6 ?breath", r"inhale.*exhale", r"breathing.*exercise"],
-    "grounding": [r"5-?4-?3-?2-?1", r"grounding.*exercise", r"senses.*exercise"],
-    "thought_label": [r"just a thought", r"naming.*thought", r"thought.*label"],
-    "suds_scale": [r"0-?10.*scale", r"suds", r"how strong.*feeling"],
-    "behavioral_activation": [r"small activity", r"enjoy.*mood", r"behavioral.*activation"],
-    "cognitive_restructuring": [r"evidence.*against", r"cognitive.*restructuring", r"thought.*evidence"],
-    "mindfulness": [r"notice.*body", r"mindfulness", r"without.*change"]
-}
+# Gentle follow-up questions
+GENTLE_FOLLOW_UPS = [
+    "How does that feel to you?",
+    "What's your take on that?",
+    "Does that resonate with you?",
+    "How does that sound?",
+    "What do you think about that?",
+    "Does that make sense to you?",
+    "How does that land with you?",
+    "What's your experience with that?",
+    "Does that feel right to you?",
+    "How does that sit with you?"
+]
 
 # Crisis keywords and resources - UK focused
 CRISIS_KEYWORDS = [
@@ -308,15 +308,15 @@ EMOTION_KEYWORDS = {
 }
 
 def is_english_text(text: str) -> bool:
-    """Check if text is primarily English using simple heuristic."""
-    if not text:
+    """Check if text is primarily English using ASCII ratio."""
+    if not text.strip():
         return True
     
     # Count non-ASCII characters
     non_ascii_count = sum(1 for char in text if ord(char) > 127)
     total_chars = len(text)
     
-    # If more than 30% non-ASCII, likely not English
+    # If more than 30% are non-ASCII, likely not English
     return (non_ascii_count / total_chars) <= 0.3
 
 def sanitize_user_input(text: str) -> str:
@@ -342,7 +342,6 @@ def sanitize_user_input(text: str) -> str:
 
 def get_emotion(text: str) -> str:
     """Classify the primary emotion in the text."""
-    # Skip emotion detection for non-English text
     if not is_english_text(text):
         return "neutral"
     
@@ -360,12 +359,11 @@ def get_emotion(text: str) -> str:
 
 def detect_crisis(text: str) -> bool:
     """Detect crisis keywords in the text."""
-    # Skip crisis detection for non-English text
     if not is_english_text(text):
         return False
     
     text_lower = text.lower()
-    return any(keyword in text_lower for keyword in CRISIS_KEYWORDS)
+    return any(re.search(pattern, text_lower) for pattern in CRISIS_PATTERNS)
 
 def crisis_block(country: str = "UK") -> str:
     """Professional crisis response block for UK."""
@@ -380,56 +378,49 @@ def crisis_block(country: str = "UK") -> str:
         "I'm here with you. Are you able to stay safe for the next few minutes?"
     )
 
-def select_micro_cue(emotion: str) -> str:
-    """Select contextually appropriate micro-cue, avoiding recent ones."""
-    recent_cues = st.session_state.get("recent_cues", [])
+def select_micro_cue(emotion: str, recent_cues: List[str]) -> str:
+    """Select appropriate micro-cue based on emotion and avoid recent ones."""
+    # Map emotions to cue groups
+    emotion_to_group = {
+        "crisis": "crisis_safety",
+        "anxiety": "heavy_emotion",
+        "depression": "heavy_emotion",
+        "anger": "heavy_emotion",
+        "grief": "heavy_emotion",
+        "joy": "positive_progress",
+        "neutral": "mild_distress"
+    }
     
-    # Select cue group based on emotion - improved for positive emotions
-    if emotion in ["anxiety", "depression", "anger", "grief"]:
-        cue_pool = CUE_GROUPS["heavy_emotion"] + CUE_GROUPS["mild_distress"]
-    elif emotion == "joy":
-        # For joy, prefer positive progress cues only
-        cue_pool = CUE_GROUPS["positive_progress"]
-    else:
-        cue_pool = CUE_GROUPS["mild_distress"] + CUE_GROUPS["neutral_filler"]
+    group = emotion_to_group.get(emotion, "mild_distress")
+    available_cues = [cue for cue in CUE_GROUPS[group] if cue not in recent_cues]
     
-    # Filter out recently used cues (increased to 5 for better variety)
-    available_cues = [cue for cue in cue_pool if cue not in recent_cues]
-    
-    # Fallback to all cues if none available
+    # If no available cues in preferred group, expand to all groups
     if not available_cues:
-        available_cues = [cue for cue in ALL_CUES if cue not in recent_cues]
+        all_cues = [cue for group_cues in CUE_GROUPS.values() for cue in group_cues]
+        available_cues = [cue for cue in all_cues if cue not in recent_cues]
     
-    # If still none, reset and use any cue
+    # If still no available cues, reset and use any cue
     if not available_cues:
-        available_cues = ALL_CUES
+        available_cues = [cue for group_cues in CUE_GROUPS.values() for cue in group_cues]
     
-    selected_cue = random.choice(available_cues)
-    
-    # Update tracking
-    recent_cues.append(selected_cue)
-    st.session_state.recent_cues = recent_cues[-5:]  # Keep last 5 for better variety
-    
-    return selected_cue
+    return random.choice(available_cues)
 
-def update_skill_tracking(response: str) -> Tuple[str, Optional[str]]:
-    """Track which micro-skills have been offered this session using regex patterns."""
-    recent_skills = st.session_state.get("recent_skills", [])
-    detected_skill = None
+def update_recent_cues(cue: str, recent_cues: List[str], max_recent: int = 5):
+    """Update recent cues list, keeping only the last N."""
+    recent_cues.append(cue)
+    if len(recent_cues) > max_recent:
+        recent_cues.pop(0)
+
+def detect_skill_usage(response: str) -> Optional[str]:
+    """Detect which CBT skill was offered in the response."""
+    response_lower = response.lower()
     
-    # Check if a skill was offered using regex patterns
-    for skill_name, patterns in SKILL_PATTERNS.items():
-        for pattern in patterns:
-            if re.search(pattern, response.lower()):
-                if skill_name not in recent_skills:
-                    recent_skills.append(skill_name)
-                    detected_skill = skill_name
-                    break  # Only track one skill per response
+    for skill_name, skill_info in CBT_SKILLS.items():
+        for pattern in skill_info["patterns"]:
+            if re.search(pattern, response_lower):
+                return skill_name
     
-    # Keep only last 5 skills
-    st.session_state.recent_skills = recent_skills[-5:]
-    
-    return response, detected_skill
+    return None
 
 def check_rate_limit() -> bool:
     """Check if user has exceeded rate limit."""
@@ -514,44 +505,14 @@ def get_hf_client():
         api_key=HUGGINGFACE_API_KEY,
     )
 
-@st.cache_resource(max_entries=1, show_spinner=False)
-def get_vectorstore(path: str = VECTOR_DB_PATH):
-    """Cached vector store to share across sessions."""
-    try:
-        # Late import to speed up cold start
-        from langchain_community.embeddings import HuggingFaceEmbeddings
-        
-        # Load your existing vector store
-        if os.path.exists(path):
-            embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
-            vectorstore = Chroma(
-                persist_directory=path,
-                embedding_function=embeddings
-            )
-            st.success(f"✅ Loaded existing vector store from {path}")
-            return vectorstore
-        else:
-            st.error(f"❌ Vector database not found at {path}")
-            st.info("Please ensure your vector_db directory is copied to the project root")
-            # Stop the app if vector store is missing
-            st.stop()
-        
-    except Exception as e:
-        # Show detailed error in dev mode
-        if st.secrets.get("ENV", "production") == "development":
-            st.exception(e)
-        else:
-            st.error(f"Error loading vector store: {str(e)}")
-        st.stop()
-
-def polish_chunks_with_llama(raw_chunks: List[str], user_query: str) -> Tuple[str, List[str]]:
-    """Use Llama to polish and summarize relevant chunks. Returns (polished_text, source_titles)."""
+def polish_chunks_with_llama(raw_chunks: List[str], user_query: str) -> str:
+    """Use Llama to polish and summarize relevant chunks."""
     if not raw_chunks:
-        return "", []
+        return ""
     
     # Skip polishing for ≤ 2 chunks to save latency
     if len(raw_chunks) <= 2:
-        return "\n\n".join(raw_chunks), []
+        return "\n\n".join(raw_chunks)
     
     try:
         # Combine chunks and create polishing prompt
@@ -580,28 +541,70 @@ def polish_chunks_with_llama(raw_chunks: List[str], user_query: str) -> Tuple[st
             model=MODEL_NAME,
             messages=[{"role": "user", "content": polish_prompt}],
             max_tokens=150,  # Reduced from 300 to save latency
-            temperature=0.3,  # Lower temperature for more focused polishing
-            timeout=30  # Add timeout for graceful handling
+            temperature=0.3  # Lower temperature for more focused polishing
         )
         
-        return completion.choices[0].message.content, []
+        return completion.choices[0].message.content
         
     except Exception as e:
         st.error(f"Error polishing chunks: {str(e)}")
         # Fallback to simple concatenation
-        return "\n\n".join(raw_chunks[:3]), []  # Just use first 3 chunks
+        return "\n\n".join(raw_chunks[:3])  # Just use first 3 chunks
+
+@st.cache_resource(show_spinner=False)
+def create_vector_store():
+    """Load existing vector store with your PDF chunks."""
+    try:
+        # Late import to speed up cold start
+        from langchain_community.embeddings import HuggingFaceEmbeddings
+        
+        # Load your existing vector store
+        if os.path.exists(VECTOR_DB_PATH):
+            embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+            vectorstore = Chroma(
+                persist_directory=VECTOR_DB_PATH,
+                embedding_function=embeddings
+            )
+            st.success(f"✅ Loaded existing vector store from {VECTOR_DB_PATH}")
+            return vectorstore
+        else:
+            st.error(f"❌ Vector database not found at {VECTOR_DB_PATH}")
+            st.info("Please ensure your vector_db directory is copied to the project root")
+            # Stop the app if vector store is missing
+            st.stop()
+        
+    except Exception as e:
+        # Show detailed error in dev mode
+        if st.secrets.get("ENV", "production") == "development":
+            st.exception(e)
+        else:
+            st.error(f"Error loading vector store: {str(e)}")
+        st.stop()
 
 def get_relevant_context(query: str, vectorstore, score_threshold: float = 0.45) -> tuple[str, List[str]]:
-    """Retrieve and polish relevant context from the vector store."""
+    """Retrieve and polish relevant context from the vector store.
+    
+    Note: Chroma returns distance scores (0 = identical, higher = less similar).
+    We filter by score <= (1.0 - threshold) to keep similar documents.
+    Higher threshold = stricter filtering = fewer but more relevant docs.
+    """
     try:
-        # Get raw chunks with scores - keep top-k and let polish step filter
+        # Get raw chunks with scores
         results_with_scores = vectorstore.similarity_search_with_score(query, k=10)
+        
+        # Filter by score threshold (Chroma distance: 0 = identical, higher = less similar)
+        # Convert threshold to distance: lower distance = higher similarity
+        distance_threshold = 1.0 - score_threshold
+        filtered_results = [
+            (doc, score) for doc, score in results_with_scores 
+            if score <= distance_threshold
+        ]
         
         # Extract raw chunks and source titles
         raw_chunks = []
         source_titles = []
         
-        for doc, score in results_with_scores[:5]:  # Get top 5 for polishing
+        for doc, score in filtered_results[:5]:  # Get more chunks for polishing
             content = doc.page_content
             if content.strip():
                 raw_chunks.append(content)
@@ -614,7 +617,7 @@ def get_relevant_context(query: str, vectorstore, score_threshold: float = 0.45)
         if st.session_state.get("polish_chunks", True):
             # Polish chunks with Llama
             with st.spinner("Polishing context..."):
-                polished_context, _ = polish_chunks_with_llama(raw_chunks, query)
+                polished_context = polish_chunks_with_llama(raw_chunks, query)
         else:
             # Use simple concatenation
             polished_context = "\n\n".join(raw_chunks[:3])
@@ -628,13 +631,9 @@ def get_relevant_context(query: str, vectorstore, score_threshold: float = 0.45)
 def build_therapist_prompt(user_msg: str, context: str = "", temperature: float = 0.7) -> str:
     """Build a world-class therapist prompt with conversation memory."""
     emotion = get_emotion(user_msg)
-    
-    # Select contextually appropriate micro-cue
-    micro_cue = select_micro_cue(emotion)
-    
-    # Get used skills for this session
-    recent_skills = st.session_state.get("recent_skills", [])
-    used_skills_str = ",".join(recent_skills) if recent_skills else "none"
+    micro_cue = select_micro_cue(emotion, st.session_state.recent_cues)
+    used_skills_str = ", ".join(st.session_state.used_skills) if st.session_state.used_skills else "none"
+    follow_up = random.choice(GENTLE_FOLLOW_UPS)
     
     # Get conversation memory from LangChain buffer
     conversation_memory = get_conversation_memory()
@@ -642,12 +641,9 @@ def build_therapist_prompt(user_msg: str, context: str = "", temperature: float 
     # Wrap user message in triple backticks for extra safety against markdown injection
     safe_user_msg = f"```\n{user_msg}\n```"
     
-    # Use string replacement instead of format() to avoid brace issues
-    style_prompt = STYLE_PROMPT.replace('MICRO_CUE_PLACEHOLDER', micro_cue).replace('USED_SKILLS_PLACEHOLDER', used_skills_str)
-    
     prompt = f"""{SYSTEM_PROMPT}
 
-{style_prompt}
+{STYLE_PROMPT}
 
 {SAFETY_PROMPT}
 
@@ -659,15 +655,29 @@ def build_therapist_prompt(user_msg: str, context: str = "", temperature: float 
 
 **Detected emotion(s):** {emotion}
 
+**Tiny empathy opener:** {micro_cue}
+
+**Used CBT skills this session:** {used_skills_str}
+
+**Gentle follow-up question:** {follow_up}
+
 **Context snippets from CBT corpus:**  
 {context}
+
+<Assistant-reply> :=  
+1. Validation: mirror the emotion in ≤ 15 words.  
+2. Exploration: open question OR gentle reflection, ≤ 20 words.  
+3. Offer: one micro-skill or tiny suggestion (optional), ≤ 40 words.  
+4. End with open question → keep the dialogue flowing.
+
+CRITICAL: Your response MUST end with a question mark (?). Use the gentle follow-up question if needed.
 
 Remember: Keep total response ≤ 120 words. Sound human, not robotic. Build on previous context."""
 
     return prompt
 
 def generate_response(prompt: str, context: str = "", temperature: float = 0.7, max_tokens: int = 150) -> str:
-    """Generate response using HuggingFace client with proper error handling."""
+    """Generate response using HuggingFace InferenceClient with therapist-quality prompts and retry logic."""
     if not HUGGINGFACE_API_KEY:
         return "I apologize, but I'm currently unable to generate responses due to missing API configuration."
     
@@ -682,7 +692,7 @@ def generate_response(prompt: str, context: str = "", temperature: float = 0.7, 
             # Build the therapist-quality prompt
             full_prompt = build_therapist_prompt(prompt, context, temperature)
             
-            # Use synchronous call (simpler and more reliable)
+            # Use the same approach as your working Colab code
             completion = client.chat.completions.create(
                 model=MODEL_NAME,
                 messages=[
@@ -697,8 +707,7 @@ def generate_response(prompt: str, context: str = "", temperature: float = 0.7, 
                     }
                 ],
                 max_tokens=max_tokens,
-                temperature=temperature,
-                timeout=30  # Add timeout for graceful handling
+                temperature=temperature
             )
             
             response = completion.choices[0].message.content
@@ -706,15 +715,27 @@ def generate_response(prompt: str, context: str = "", temperature: float = 0.7, 
             # Ensure it ends with a follow-up question
             response = ensure_follow_up_question(response)
             
+            # Update recent cues
+            emotion = get_emotion(prompt)
+            micro_cue = select_micro_cue(emotion, st.session_state.recent_cues)
+            update_recent_cues(micro_cue, st.session_state.recent_cues)
+            
+            # Detect skill usage
+            skill_used = detect_skill_usage(response)
+            if skill_used:
+                st.session_state.last_skill = skill_used
+                if skill_used not in st.session_state.used_skills:
+                    st.session_state.used_skills.append(skill_used)
+            
             return response
             
         except Exception as e:
             if attempt < max_retries:
-                wait_time = base_wait * (2 ** attempt)
+                wait_time = base_wait * (2 ** attempt)  # Exponential backoff: 3s, 6s
                 time.sleep(wait_time)
                 continue
             else:
-                return f"I apologize, but I'm having trouble connecting right now. Please try again in a moment."
+                return f"I apologize, but I'm having trouble connecting right now. Error: {str(e)}"
 
 def get_user_conversation(user_id: str) -> List[Dict[str, str]]:
     """Get conversation history for a user (session-based for GDPR compliance)."""
@@ -724,91 +745,139 @@ def save_user_conversation(user_id: str, conversation: List[Dict[str, str]]):
     """Save conversation history (session-based for GDPR compliance)."""
     st.session_state.messages = conversation
 
-def clear_conversation_with_backup():
-    """Clear conversation with backup for undo functionality."""
-    # Store backup before clearing
-    st.session_state.conversation_backup = st.session_state.messages.copy()
-    
-    # Clear everything
-    st.session_state.messages = []
-    st.session_state.conversation_summary = ""
-    st.session_state.memory.clear()
-    st.session_state.recent_cues = []
-    st.session_state.recent_skills = []
-    st.session_state.last_skill_offered = None
-    
-    # Show undo toast with auto-close
-    st.success("Conversation cleared successfully!")
-    st.toast("Conversation cleared – Undo available for 5 seconds", icon="️", auto_close=True)
+def stream_chunks(text: str, chunk_size: int = 3) -> str:
+    """Stream text in small chunks for typing effect."""
+    words = text.split()
+    for i in range(0, len(words), chunk_size):
+        yield " ".join(words[i:i + chunk_size]) + " "
+        time.sleep(0.05)
 
-def undo_clear_conversation():
-    """Restore conversation from backup."""
-    if st.session_state.conversation_backup:
-        st.session_state.messages = st.session_state.conversation_backup
-        st.session_state.conversation_backup = None
-        st.success("Conversation restored!")
-        st.rerun()
+def show_disclaimer():
+    """Show disclaimer once per session."""
+    if "disclaimer_shown" not in st.session_state:
+        st.session_state.disclaimer_shown = True
+        
+        st.markdown("""
+        <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 10px; padding: 1rem; margin: 1rem 0;">
+        <h4>⚠️ Important Disclaimer</h4>
+        <p><strong>VentPal is not a substitute for professional mental health care.</strong></p>
+        <p>This chatbot provides general support and information based on Cognitive Behavioral Therapy principles. 
+        It cannot diagnose, treat, or provide medical advice.</p>
+        <p><strong>If you're in crisis:</strong> Call 999 (UK emergency) or contact Samaritans at 116 123 (24/7, free).</p>
+        <p>By continuing, you acknowledge that this is for informational purposes only.</p>
+        </div>
+        """, unsafe_allow_html=True)
 
 # Main application
 def main():
-    # Set deterministic random seed for consistent cue ordering
-    random.seed(st.session_state.user_id)
-    
     # Header
     st.markdown("""
     <div class="main-header">
-        <h1>💨 VentPal</h1>
-        <p>Your AI Mental Health Companion</p>
+        <h1>🤖 VentPal - Mental Health Support</h1>
+        <p>Your empathetic CBT-informed companion</p>
     </div>
     """, unsafe_allow_html=True)
+    
+    # Show disclaimer
+    show_disclaimer()
     
     # GDPR Notice
     if GDPR_COMPLIANT:
         st.sidebar.info("🔒 **Privacy Notice:** Your conversation is stored only in this session and will be automatically deleted when you close this tab for your privacy.")
     
-    # Initialize vector store using cached function
+    # Initialize vector store - FIXED: removed problematic truth test
     with st.spinner("Loading mental health resources..."):
-        vectorstore = get_vectorstore()
+        vectorstore = create_vector_store()
     
-    # Sidebar settings with tooltips
+    # Sidebar settings
     with st.sidebar:
         st.header("⚙️ Settings")
         
-        # Response Creativity with tooltip
-        st.markdown('<div class="tooltip">Response Creativity ℹ️<span class="tooltiptext">Lower = more focused responses, Higher = more creative variations</span></div>', unsafe_allow_html=True)
-        temperature = st.slider("", 0.1, 1.0, 0.7, 0.1, 
-                               help="Lower = more focused, Higher = more creative")
+        # User info
+        if not st.session_state.user_name:
+            st.session_state.user_name = st.text_input("What should I call you?", placeholder="Your name")
         
-        # Max Response Length with tooltip
-        st.markdown('<div class="tooltip">Max Response Length ℹ️<span class="tooltiptext">Maximum number of words in VentPal\'s responses</span></div>', unsafe_allow_html=True)
-        max_tokens = st.slider("", 50, 200, 150, 25,
-                              help="Maximum length of responses")
+        if st.session_state.user_name:
+            st.success(f"Hello, {st.session_state.user_name}! 💨")
         
-        # Conversation Memory with tooltip
-        st.markdown('<div class="tooltip">Conversation Memory ℹ️<span class="tooltiptext">How many previous exchanges to remember for context</span></div>', unsafe_allow_html=True)
-        memory_turns = st.slider("", 1, 5, 3, 1,
-                                help="Number of previous exchanges to remember")
+        # Session goals
+        if not st.session_state.session_goals:
+            st.session_state.session_goals = st.text_area(
+                "What would you like to work on today?", 
+                placeholder="e.g., managing anxiety, improving mood, coping with stress",
+                height=100
+            )
         
-        # Relevance Threshold with tooltip
-        st.markdown('<div class="tooltip">Relevance Threshold ℹ️<span class="tooltiptext">Higher = stricter filtering = fewer but more relevant knowledge chunks</span></div>', unsafe_allow_html=True)
-        score_threshold = st.slider("", 0.1, 0.9, 0.45, 0.05,
-                                   help="Higher = stricter filtering = fewer but more relevant docs")
+        # Configuration options
+        st.subheader("🔧 Configuration")
+        
+        temperature = st.slider(
+            "Creativity Level", 
+            min_value=0.1, 
+            max_value=1.0, 
+            value=0.7, 
+            step=0.1,
+            help="Higher values make responses more creative, lower values more focused"
+        )
+        
+        max_tokens = st.slider(
+            "Response Length", 
+            min_value=50, 
+            max_value=200, 
+            value=150, 
+            step=10,
+            help="Maximum number of words in responses"
+        )
+        
+        memory_turns = st.slider(
+            "Conversation Memory", 
+            min_value=1, 
+            max_value=5, 
+            value=3, 
+            step=1,
+            help="Number of previous exchanges to remember"
+        )
+        
+        score_threshold = st.slider(
+            "Content Relevance Filter", 
+            min_value=0.1, 
+            max_value=0.9, 
+            value=0.45, 
+            step=0.05,
+            help="Higher values show only the most relevant CBT content"
+        )
         
         # New setting for chunk polishing
-        polish_chunks = st.checkbox("Polish Knowledge Chunks", value=True,
-                                   help="Use Llama to polish and summarize retrieved chunks for better relevance")
-        
-        # Reset UI if polishing setting changes
-        if "previous_polish_setting" not in st.session_state:
-            st.session_state.previous_polish_setting = polish_chunks
-        elif st.session_state.previous_polish_setting != polish_chunks:
-            st.session_state.previous_polish_setting = polish_chunks
-            st.experimental_rerun()
-        
-        st.session_state.polish_chunks = polish_chunks
+        polish_chunks = st.checkbox(
+            "Polish Knowledge Chunks", 
+            value=True,
+            help="Use Llama to polish and summarize retrieved chunks for better relevance"
+        )
         
         # Store memory_turns in session state for use in get_conversation_memory()
         st.session_state.memory_turns = memory_turns
+        st.session_state.polish_chunks = polish_chunks
+        
+        # Rate limiting info
+        st.subheader("📊 Usage")
+        st.metric("Requests Today", st.session_state.request_count)
+        
+        # Clear conversation
+        if st.button("🗑️ Clear Conversation", type="secondary"):
+            # Backup current conversation
+            st.session_state.conversation_backup = st.session_state.messages.copy()
+            st.session_state.messages = []
+            st.session_state.memory.clear()
+            st.session_state.used_skills = []
+            st.session_state.recent_cues = []
+            st.session_state.last_skill = ""
+            st.toast("Conversation cleared! 💬", icon="🗑️")
+        
+        # Undo clear (if backup exists)
+        if st.session_state.conversation_backup and st.button("↩️ Undo Clear", type="secondary"):
+            st.session_state.messages = st.session_state.conversation_backup.copy()
+            st.session_state.conversation_backup = []
+            st.toast("Conversation restored! ✅", icon="↩️")
         
         st.divider()
         st.markdown("**Rate Limit:** " + 
@@ -837,13 +906,6 @@ def main():
         with st.chat_message("assistant", avatar="🤖"):
             st.markdown(f"**Hello {st.session_state.user_name}!** I'm **VentPal**, your mental health companion.\n\nYou can talk to me about how you're feeling. This space is private and safe.")
     
-    # Disclaimer once per session
-    if "disclaimer" not in st.session_state:
-        st.info("⚠️ **Important:** This chatbot provides CBT-based information and support. "
-                "It is **not** a substitute for professional mental health care. "
-                "If you're in crisis, please contact emergency services or a crisis hotline.")
-        st.session_state.disclaimer = True
-    
     # Display chat history
     for message in conversation:
         with st.chat_message(message["role"], avatar="🤖" if message["role"] == "assistant" else "👤"):
@@ -865,11 +927,10 @@ def main():
                            unsafe_allow_html=True)
             
             # Show skill badge for assistant messages
-            if message["role"] == "assistant" and "skill_offered" in message:
-                skill_name = message["skill_offered"]
-                if skill_name:
-                    st.markdown(f'<div class="skill-badge">💡 {skill_name.replace("_", " ").title()}</div>', 
-                               unsafe_allow_html=True)
+            if message["role"] == "assistant" and "skill_used" in message:
+                skill_used = message["skill_used"]
+                if skill_used:
+                    st.markdown(f'<div class="skill-badge">💡 {CBT_SKILLS[skill_used]["name"]}</div>', unsafe_allow_html=True)
             
             # Show source citations for assistant messages
             if message["role"] == "assistant" and "sources" in message:
@@ -920,9 +981,8 @@ def main():
                 # Update memory even for crisis responses
                 update_memory(sanitized_prompt, crisis_response)
         else:
-            # Generate AI response with typing indicator and elapsed time
+            # Generate AI response with typing indicator
             with st.chat_message("assistant", avatar="🤖"):
-                start_time = time.time()
                 with st.spinner("VentPal is thinking..."):
                     # Get relevant context (now with Llama polishing)
                     context, source_titles = get_relevant_context(sanitized_prompt, vectorstore, score_threshold)
@@ -930,28 +990,27 @@ def main():
                     # Generate response
                     response = generate_response(sanitized_prompt, context, temperature, max_tokens)
                     
-                    # Update skill tracking and get detected skill
-                    response, detected_skill = update_skill_tracking(response)
+                    # Detect skill usage
+                    skill_used = detect_skill_usage(response)
                     
-                    # Display response (removed streaming for now)
+                    # Display response
                     st.markdown(response)
+                    
+                    # Show skill badge if skill was used
+                    if skill_used:
+                        st.markdown(f'<div class="skill-badge">💡 {CBT_SKILLS[skill_used]["name"]}</div>', unsafe_allow_html=True)
                     
                     # Add assistant message to conversation
                     conversation.append({
                         "role": "assistant",
                         "content": response,
+                        "skill_used": skill_used,
                         "sources": source_titles if context else [],
-                        "skill_offered": detected_skill,
                         "timestamp": datetime.now().isoformat()
                     })
                     
                     # Update LangChain memory
                     update_memory(sanitized_prompt, response)
-                
-                # Show elapsed time
-                elapsed = time.time() - start_time
-                if elapsed > 2:  # Only show if it took more than 2 seconds
-                    st.caption(f"Response generated in {elapsed:.1f}s")
         
         # Increment rate limit
         increment_rate_limit()
@@ -959,20 +1018,14 @@ def main():
         # Save conversation
         save_user_conversation(st.session_state.user_id, conversation)
     
-    # Sidebar actions
-    with st.sidebar:
-        st.divider()
-        
-        # Clear conversation with backup
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("🗑️ Clear"):
-                clear_conversation_with_backup()
-                st.rerun()
-        
-        with col2:
-            if st.button("↩️ Undo") and st.session_state.conversation_backup:
-                undo_clear_conversation()
+    # Footer
+    st.markdown("---")
+    st.markdown("""
+    <div style="text-align: center; color: #666; font-size: 0.8rem;">
+    <p>🤖 VentPal - Powered by CBT & AI | Session data is private and temporary</p>
+    <p>For crisis support: Samaritans 116 123 | Shout 85258 | NHS 111</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()

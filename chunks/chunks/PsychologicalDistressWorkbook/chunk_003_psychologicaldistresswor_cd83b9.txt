@@ -1,0 +1,6 @@
+[source_pdf: PsychologicalDistressWorkbook.txt] [therapy_type: DBT] [subtype: Distress Tolerance Skills (DBT-informed)] [audience: General Adult] [language: en]
+PsychologicalDistressWorkbook
+Psychological distress is a general term used describe unpleasant feelings or emotions that impact upon our level of functioning. Psychological distress can result in negative views of the environment, others,
+and the self.
+When we feel upset or distressed we can react automatically without thinking about the consequences and often we end up using unhealthy or unhelpful coping strategies. We can then feel bad after using them and think it makes us bad that we are using them. In this workbook we will work towards learning new and more healthy or beneficial techniques to aid in our recovery and to help prevent relapse.
+8
