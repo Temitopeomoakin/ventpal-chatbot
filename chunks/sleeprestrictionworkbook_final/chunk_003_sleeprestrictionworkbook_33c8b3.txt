@@ -1,0 +1,18 @@
+[source_pdf: sleeprestrictionworkbook_final.txt] [therapy_type: CBT] [subtype: Sleep Restriction Therapy] [audience: General Adult] [language: en]
+sleeprestrictionworkbook_final
+Is this the right approach for me?
+Sleep clinics
+Our sleep restriction workbook is based on CBT-I
+(Cognitive Behavioural Therapy for insomnia)
+and is recommended for people with insomnia,
+not other sleep difficulties.
+Difficulties such as the below are best treated through a sleep clinic. If you believe you have one of the below, please consult with your GP.
+• Restless leg syndrome
+• Night terrors
+• Sleepwalking
+• Narcolepsy
+• Sleep apnoea
+Medication
+If you have been prescribed sleep medication by your GP, and have been taking this to aid your sleep, we would generally not consider you for sleep restriction.
+This is because the effectiveness of the sleep restriction is limited if you are relying on sleep medication. Please discuss with your therapist and GP about how best to move forward.
+5

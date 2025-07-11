@@ -1,0 +1,16 @@
+[source_pdf: Resting_Well_.txt] [therapy_type: CBT] [subtype: Sleep Psychoeducation (“Resting Well”)] [audience: General Adult] [language: en]
+Resting_Well_
+Resting Well: Steps to a Good Night’s Sleep
+STAGE 5 – CALCULATE YOUR SLEEP EFFICIENCY
+Once you’ve spent a week or two using your Time in Bed Prescription, calculate your
+Sleep Efficiency using the Sleep Restriction Worksheet. Your Sleep Efficiency is the percentage of time in bed you spend asleep.
+Using your latest Sleep Diary, you will need to calculate your Average Sleep Time for the period of time you’ve been using the Time in Bed Prescription.
+You can then calculate your Sleep Efficiency by taking your Average Sleep Time (in minutes) and dividing it by your Time in Bed Prescription (in minutes). Multiply this number by 100, then round this number up or down to the nearest whole number.
+YUSUF’S SLEEP EFFICIENCY
+Yusuf applied his Time in Bed Prescription of 364 minutes for 7 days. He kept a new sleep diary during this time and worked out that his average sleep time was 295 minutes.
+TO CALCULATE HIS SLEEP EFFICIENCY:
+Yusuf’s average sleep time = 295 minutes
+Yusuf’s Time in Bed Prescription = 364 minutes
+(Average sleep time ÷ Time in Bed Prescription) x 100
+(295 ÷ 364) x 100 = 81%
+30

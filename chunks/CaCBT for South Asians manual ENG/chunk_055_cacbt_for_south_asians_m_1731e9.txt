@@ -1,0 +1,5 @@
+[source_pdf: CaCBT for South Asians manual ENG.txt] [therapy_type: CaCBT] [subtype: South Asian Adapted CBT] [audience: South Asian diaspora] [language: en]
+CaCBT for South Asians manual ENG
+3.1.4 Focus of Therapy
+The therapist must address the client’s concerns (e.g., physical symptoms) instead of just using therapy mechanically or rigidly. CBT puts great emphasis on structuring sessions around the client’s needs. It is the therapist’s responsibility to address the client’s concerns, engage them, and, only then, move on to therapy issues that the therapist feels should be addressed. The two-stage rule we use can be described as focus and connect. In the first stage, the therapist should focus on the client’s concerns (e.g., somatic complaints). During the second stage, the therapist connects the client’s problem with the therapist’s concerns (e.g., depressive illness, anxiety, or suicidal thoughts)
+and promotes the therapy plan. Part 3 Therapy-Related Issues II | 45

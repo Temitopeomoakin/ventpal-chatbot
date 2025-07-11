@@ -1,0 +1,8 @@
+[source_pdf: panic.txt] [therapy_type: CBT] [subtype: Panic Self-Help Leaflet] [audience: General Adult] [language: en]
+panic
+My exposure diary
+Fill in the below exposure diary before and after you have placed yourself in an anxiety provoking situation. This can be helpful so that you can see improvements with each repetition.
+Date Duration Exercise/ Anxiety rating (0-100)
+& (minutes) Situation Comments
+Before At the start At the end
+Time

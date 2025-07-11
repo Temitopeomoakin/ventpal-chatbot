@@ -1,0 +1,5 @@
+[source_pdf: PsychologicalDistressWorkbook.txt] [therapy_type: DBT] [subtype: Distress Tolerance Skills (DBT-informed)] [audience: General Adult] [language: en]
+PsychologicalDistressWorkbook
+Dialectical Behavioural Therapy was developed by Marsha Linehan for people who struggle with Borderline Personality Disorder, but it can also be used for other mental health conditions in which people struggle with difficult emotions and cope with this by harming themselves, for example through self-harm, eating disorders or substance abuse.
+The diagram below can be a way of explaining what DBT covers. At the core of it is self-management, or learning what you can do to help yourself with your condition. This doesn’t mean doing everything on your own—it also means knowing when to ask for more help.
+15

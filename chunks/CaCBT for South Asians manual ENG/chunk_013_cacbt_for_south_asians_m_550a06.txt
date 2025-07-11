@@ -1,0 +1,29 @@
+[source_pdf: CaCBT for South Asians manual ENG.txt] [therapy_type: CaCBT] [subtype: South Asian Adapted CBT] [audience: South Asian diaspora] [language: en]
+CaCBT for South Asians manual ENG
+Southampton Adaptation Framework to Culturally Adapt CBT
+We developed the Southampton adaptation framework (see Table 1) to culturally adapt CBT [28]
+using a mixed-methods approach (i.e., qualitative and quantitative data was collected). Our qualitative studies involved the exploration of experiences and opinions of patients, their carers, therapists,
+mental health professionals working with them, and community leaders. For details of methods and the process of adaptation, please see references [13, 26, 33, 39, 40]. Information obtained from the aforementioned qualitative studies was used to culturally adapt a therapy manual using
+CBT [41]. This methodology has been used to develop guidelines for cultural adaptation of CBT in
+South Asia [35], the Middle East [29], North Africa [42], England [43], China [22] and Canada [44].
+Table 1 Southampton Adaptation Framework
+Major areas Minor areas
+Awareness and 1. Cause and effect model of mental illness used by the population in preparation focus (Bio-Psycho-Socio-Spiritual Model)
+2. Language and cultural adaptation of terminology (literal translations do not work)
+3. Communication styles, idioms of distress and personal boundaries
+4. Family and caregivers’ involvement
+5. Health system-related issues for future implementation (number of therapists, resources, distance from the treatment facility)
+6. Considerations of gender and sex-related issues
+7. Pathways to care with a focus on help from traditional healers
+(faith healers, religious leaders, elders)
+8. Coping strategies and cultural strengths—religion, spirituality,
+cultural practices
+Assessment and 1. Common presenting complaints and concerns engagement
+2. Self-awareness in therapists about their belief system
+3. Assessment of acculturation and immigration status
+4. Racism and racial or other trauma
+5. Stigma, shame, and guilt
+6. Barriers to seeking therapy and engagement with therapy
+7. Awareness of illness, its causes and its treatment
+8. Beliefs about illness, its causes and its treatment
+12 | CaCBT for Canadians of South Asian Origin
