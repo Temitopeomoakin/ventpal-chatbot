@@ -1,0 +1,17 @@
+[source_pdf: IAPT-BAME-PPG-2019.txt] [therapy_type: Practice] [subtype: BAME Service User Positive Practice Guide] [audience: BAME communities] [language: en]
+IAPT-BAME-PPG-2019
+Again, this model is a general one that can be adapted to work with any BAME community. This approach has the advantage of helping therapists adapt a particular therapy to the unique combination of values,
+beliefs and customs of each service user. Culturally responsive work does not assume a service user holds a particular set of values and practices based on their ethnicity. It enables the therapist to be flexible in terms of their understanding of BAME service users in a way that avoids assumptions and stereotypes, while recognizing differences at the same time. This approach is useful in areas with rapidly changing demographics, as it is responsive to new communities accessing services. Main differences between culturally adapted and culturally responsive CBT
+Culturally adapted CBT Culturally responsive CBT
+Developed for a specific population Yes No, generalizable
+No, usually in English unless
+Delivered in community languages Yes, generally via an interpreter or bilingual therapist
+Therapists of the same ethnic
+Yes, generally No, although they could be background as service users
+Developed from existing evidence-based
+Yes Yes therapies
+Takes values, beliefs and situation of
+Yes Yes service user into account
+Flexible around different degrees of cultural
+Yes, to some extent Yes identification, religious affiliation and identity
+12

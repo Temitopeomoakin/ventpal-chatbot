@@ -1,0 +1,4 @@
+[source_pdf: IAPT-BAME-PPG-2019.txt] [therapy_type: Practice] [subtype: BAME Service User Positive Practice Guide] [audience: BAME communities] [language: en]
+IAPT-BAME-PPG-2019
+Where IAPT services identify that some communities are under-represented, it may be useful to bring this to the attention of potential referrers and discuss any concerns they have about referring people for psychological therapies. As concerns about confidentiality are consistently identified as a barrier to engagement with mental health services amongst BAME communities, IAPT services may need to work with GPs and other referrers to look at how best to explain confidentiality and address any apprehensions that potential service users might have. It is likely to be more helpful if GPs provide service users with a choice as to whether they would like to be referred to IAPT by their GP or whether they
+7

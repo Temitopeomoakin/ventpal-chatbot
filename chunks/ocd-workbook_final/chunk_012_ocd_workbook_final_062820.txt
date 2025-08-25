@@ -1,0 +1,9 @@
+[source_pdf: ocd-workbook_final.txt] [therapy_type: CBT] [subtype: OCD Self-Help Workbook] [audience: General Adult] [language: en]
+ocd-workbook_final
+ERP hierarchy
+In the table below, list your compulsions in order of the amount of anxiety they would cause you if you were unable to engage in your compulsive behaviours. Put the most anxiety provoking situation at the top.
+Anxiety if not carried out Situation
+(0-100%)
+Once you have a hierarchy, you need to start putting yourself in situations that cause you anxiety and wait until these feelingsease without using your compulsive behaviours.
+Start with the easiest and least anxiety provoking situation on the list and put yourself in that situation. Use the exposure diary (page 14) to rate your anxiety before you carry out the exposure, at the start and then at the end.
+13

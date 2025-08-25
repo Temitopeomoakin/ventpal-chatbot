@@ -1,0 +1,4 @@
+[source_pdf: PsychologicalDistressWorkbook.txt] [therapy_type: DBT] [subtype: Distress Tolerance Skills (DBT-informed)] [audience: General Adult] [language: en]
+PsychologicalDistressWorkbook
+Sometimes when sometimes is really distressing us, we are focused so much on is that it is hard to stand back and gain perspective. In this case it can be helpful to take the helicopter view and gain more perspective on the situation.
+34

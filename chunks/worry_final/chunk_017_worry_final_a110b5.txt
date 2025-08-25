@@ -1,0 +1,5 @@
+[source_pdf: worry_final.txt] [therapy_type: CBT] [subtype: Worry Management (Alternate)] [audience: General Adult] [language: en]
+worry_final
+Step 2: Brainstorm solutions
+Problem I’m trying to solve:
+Mind map
