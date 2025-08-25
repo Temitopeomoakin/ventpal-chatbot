@@ -1,12 +1,11 @@
-
 # ventpal.py — VentPal (Streamlit) with permissioned RAG + classifier-first pipeline
 # - Classifier: Cloud Run /classify (Emotion/Topic/Intent/Severity) + regex safety override
-# - RAG: Chroma persistent store (opens your COLLECTION_NAME) + robust retrieval even when scores look "high"
+# - RAG: Chroma persistent store (opens your COLLECTION_NAME) + robust retrieval (rank-first, no brittle threshold)
 # - LLM: HF Inference (Scout primary → fallback), minimal repetition, exactly one open question
 # - Flow: rapport → (optionally) micro-permission → RAG-backed skill (on “yes”)
 # - Sidebar: shows classifier labels/confidence; RAG probe; status chips
 # - Disclaimers: clear non-clinical notice (CBT/DBT/Journaling only)
-# - Secrets expected: see notes at bottom
+# - FIX: removed caching around probe_vector_db (previous error: UnhashableParamError)
 
 # ─────────────────────────── Boot / Env ───────────────────────────
 import sys, os, time, json, re, hashlib, random
@@ -198,9 +197,9 @@ def create_vector_store():
     st.error(f"Failed to load embeddings or open Chroma. (hint: add HF token, check COLLECTION_NAME)\n\nDetails: {last_err}")
     st.stop()
 
-@st.cache_resource(show_spinner=False)
+# IMPORTANT: DO NOT CACHE THIS (was causing UnhashableParamError due to Chroma arg)
 def probe_vector_db(vs: Chroma) -> Dict:
-    """Quick rank-based probe: we DO NOT hard-filter by distance (scores can be >1.0)."""
+    """Quick rank-based probe. We DO NOT hard-filter by distance (scores can be >1.0)."""
     try:
         probes = ["panic attack", "deep breathing", "journaling prompt", "grounding", "thought challenging"]
         hits = 0; titles = set()
@@ -217,13 +216,11 @@ def probe_vector_db(vs: Chroma) -> Dict:
 def get_relevant_context(query: str, vectorstore: Chroma, max_chunks: int = 3) -> Tuple[str, List[str]]:
     """
     Rank-first selection (no brittle threshold).
-    We keep top-k results (k=8) and take the first <= max_chunks texts.
-    This avoids the common pitfall where Chroma distances ~0.7–1.1 get wrongly filtered out.
+    Keep top-k results (k=8) and take the first ≤ max_chunks texts.
     """
     try:
         results = vectorstore.similarity_search_with_score(query, k=8)
     except TypeError:
-        # some versions may not have with_score filter signature differences
         docs = vectorstore.similarity_search(query, k=8)
         results = [(d, 0.0) for d in docs]
 
@@ -285,14 +282,11 @@ OPEN_QUESTIONS = [
 ]
 def ensure_single_question(text: str) -> str:
     r = (text or "").strip()
-    # guard: ensure exactly one question; rotate stems
     if not r.endswith("?"):
         choices = [q for q in OPEN_QUESTIONS if q.split(" ")[0].lower() != st.session_state.last_question_stem]
         q = random.choice(choices or OPEN_QUESTIONS)
         r = r.rstrip(".! ") + ". " + q
-    # update last stem
-    stem = r.split("?")[-2] if "?" in r else r
-    stem = stem.strip().split(" ")[0].lower() if stem else ""
+    stem = r.split("?")[0].strip().split(" ")[0].lower() if "?" in r else ""
     if stem: st.session_state.last_question_stem = stem
     return r
 
@@ -372,7 +366,7 @@ def get_conversation_memory() -> str:
     except Exception:
         return "This is the start of our conversation."
 
-# Safer yes/no detectors (token + phrase; avoids “yes” in “yesterday”)
+# Safer yes/no detectors
 import re as _re
 _YES_TOKENS = {"yes","yeah","yep","yup","sure","ok","okay","alright","affirmative","please"}
 _YES_PHRASES = {"yes please","sounds good","go ahead","please do","that would help","i'm open","im open","i am open","i'd like that","id like that","share it","tell me","please continue"}
@@ -402,7 +396,7 @@ def increment_rate_limit(): st.session_state.request_count += 1
 
 # ─────────────────────────── App ──────────────────────────────────────────────
 def main():
-    # Header (no debug tags)
+    # Header
     st.markdown(
         """<div class="main-header">
             <h1>💨 VentPal</h1>
@@ -419,7 +413,7 @@ def main():
     # Init RAG
     with st.spinner("Connecting to knowledge base…"):
         vectorstore = create_vector_store()
-        probe = probe_vector_db(vectorstore)
+        probe = probe_vector_db(vectorstore)  # NOT CACHED (fixes UnhashableParamError)
 
     # Classifier health
     with st.spinner("Checking classifier…"):
@@ -473,7 +467,6 @@ def main():
     int_lbl, int_conf = _top(clf.get("intent"), "others", 0.0)
     sev_lbl, sev_conf = _top(clf.get("severity"), "green", 0.0)
 
-    # safety first
     if detect_crisis_regex(user_text) or severity_triggers_alert(sev_lbl, sev_conf) or "suicid" in int_lbl:
         msg = crisis_block()
         with st.chat_message("assistant", avatar="🤖"): st.markdown(msg)
@@ -491,7 +484,6 @@ def main():
     # 2) Handle pending permission (from previous turn)
     if st.session_state.awaiting_skill_permission:
         if is_negative(user_text):
-            # Respect "no" → supportive turn
             empathy = select_empathy(emo_lbl if emo_conf >= 0.5 else "neutral")
             memory = get_conversation_memory()
             msgs = build_support_only_prompt(user_text, memory, empathy)
@@ -530,7 +522,6 @@ def main():
             except Exception:
                 reply = "Let’s keep it simple: what would feel supportive right now?"
 
-            # If RAG found nothing, be explicit to the user once and still respond supportively
             if not context:
                 reply = reply.rstrip() + "\n\n_(I couldn’t find a matching handout just now, but I can still share a tiny idea if you’d like.)_"
 
