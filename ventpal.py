@@ -1,4 +1,3 @@
-
 # ventpal.py — VentPal (Streamlit) with permissioned RAG + classifier-first pipeline
 # - Classifier: Cloud Run /health + /classify (emotion/topic/intent/severity)
 # - RAG: Chroma (persistent, tolerant scoring, shows raw scores)
