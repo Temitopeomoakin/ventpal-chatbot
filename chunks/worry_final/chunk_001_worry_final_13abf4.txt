@@ -1,0 +1,11 @@
+[source_pdf: worry_final.txt] [therapy_type: CBT] [subtype: Worry Management (Alternate)] [audience: General Adult] [language: en]
+worry_final
+Worry
+What is worry?
+Everyone experiences worry from time to time, usually when dealing with difficult or uncertain situations.
+However, some people worry so much that it begins to affect their wellbeing and can cause chronic stress or anxiety.
+Worry can be defined as a type of self-talk in which we predict that negative events will happen in the future and over-estimate the possibility of disaster.
+Worrying thoughts tend to be characterised by “What if?” statements, for example: “What if my train is delayed?”
+This is usually followed by imagined situations in which we try to plan how we would cope with these events if they were to happen. Often this involves over-estimating the likelihood or severity of negative events and underestimating our own ability to cope,
+should the event occur.
+3

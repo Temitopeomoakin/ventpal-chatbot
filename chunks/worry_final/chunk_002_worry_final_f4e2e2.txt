@@ -1,0 +1,14 @@
+[source_pdf: worry_final.txt] [therapy_type: CBT] [subtype: Worry Management (Alternate)] [audience: General Adult] [language: en]
+worry_final
+Vicious cycle of worry
+Thoughts
+“What if my car breaks down?”
+“What if worrying makes me ill?”
+Feelings Physical
+Nervous Disturbed sleep
+Scared Sweating
+Sad Headaches
+Behaviours
+Worry
+Seek reassurance from others
+Put stuff off

@@ -1,0 +1,9 @@
+[source_pdf: thoughts__final.txt] [therapy_type: CBT] [subtype: Cognitive Restructuring (“Thoughts”)] [audience: General Adult] [language: en]
+thoughts__final
+Thought challenger worksheet
+Automatic Evidence that Evidence that Balanced
+Negative thoughts Mood supports that does not support thought Mood
+Situation thinking
+(Belief (0-100%) thought the thought (Belief (0-100%)
+style
+0-100%) (for) (against) 0-100%)

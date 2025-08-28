@@ -1,0 +1,9 @@
+[source_pdf: PsychologicalDistressWorkbook.txt] [therapy_type: DBT] [subtype: Distress Tolerance Skills (DBT-informed)] [audience: General Adult] [language: en]
+PsychologicalDistressWorkbook
+When the brain gets used to feeling a certain way, it starts going there more and more, because it’s familiar and easy to get to. This is what’s called a
+“negative feedback loop”.
+In order to cope with their distress, most people avoid the trigger. Though avoidance helps in the immediate moment, it makes anxiety worse in the long term. Why?
+Two reasons:
+1) It reinforces your belief that you’re helpless to deal with it
+2) you don’t get positive experiences as basis for further success
+13

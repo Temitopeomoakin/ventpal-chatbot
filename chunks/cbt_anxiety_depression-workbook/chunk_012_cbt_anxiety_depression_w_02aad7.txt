@@ -1,0 +1,18 @@
+[source_pdf: cbt_anxiety_depression-workbook.txt] [therapy_type: CBT] [subtype: General Anxiety & Depression Skills] [audience: General Adult] [language: en]
+cbt_anxiety_depression-workbook
+Goal setting
+What are your treatment goals?
+When planning your treatment goals, it is important to make sure they are SMART.
+• Specific – What, when, where, with who?
+• Measurable – How will you know you have completed this activity?
+• Achievable – Do you have everything you need to achieve this?
+• Realistic – Is it realistic?
+• Time-focused – What time, what day, for how long?
+Example:
+“Do exercise” becomes “To go swimming every Friday at 9am for 30 minutes, by myself”
+My SMART Goals
+SMART Goal 1:
+SMART Goal 2:
+SMART Goal 3:
+SMART Goal 4:
+15
