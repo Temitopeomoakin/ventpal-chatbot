@@ -1,0 +1,3 @@
+[source_pdf: Resting_Well_.txt] [therapy_type: CBT] [subtype: Sleep Psychoeducation (“Resting Well”)] [audience: General Adult] [language: en]
+Resting_Well_
+If this percentage is below 85%, reduce the initial TIB prescription by 15 minutes. If the percentage is between 85% and 89% keep the initial TIB prescription the same. If the percentage is 90% or over, add 15 minutes on to the intital TIB prescription. 29

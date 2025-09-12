@@ -1,0 +1,3 @@
+[source_pdf: panic.txt] [therapy_type: CBT] [subtype: Panic Self-Help Leaflet] [audience: General Adult] [language: en]
+panic
+just shows how well it works”. 13
