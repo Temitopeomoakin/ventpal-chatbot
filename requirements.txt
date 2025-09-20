@@ -2,12 +2,9 @@
 streamlit>=1.32.0
 requests>=2.31.0
 
-# LangChain - EXACT versions to match your working Colab
-langchain==0.1.20
-langchain-community==0.0.38
-
-# Vector DB - compatible with your existing database
-chromadb==0.4.24
+# LangChain - OLDER version before the redirect
+langchain==0.0.350
+chromadb==0.4.22
 
 # Embeddings + Transformers stack
 sentence-transformers>=2.6.1,<3
