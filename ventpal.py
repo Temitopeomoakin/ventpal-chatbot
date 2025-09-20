@@ -57,40 +57,40 @@ if "retrieval_history" not in st.session_state:
 if "ablation_mode" not in st.session_state:
     st.session_state.ablation_mode = "full_system"
 
-# SECURE: All sensitive data from secrets only - NO hardcoded values
-HUGGINGFACE_API_KEY = st.secrets.get("HUGGINGFACE_API_KEY", "")
-MODEL_NAME = st.secrets.get("MODEL_NAME", "meta-llama/Llama-4-Scout-17B-16E-Instruct")
-EMBEDDING_MODEL = st.secrets.get("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
-FALLBACK_MODEL = st.secrets.get("FALLBACK_MODEL", "HuggingFaceH4/zephyr-7b-beta")
-VECTOR_DB_PATH = st.secrets.get("VECTOR_DB_PATH", "vector_db_new")
-COLLECTION_NAME = st.secrets.get("COLLECTION_NAME", "cbt_docs_fresh_2024")
-MAX_REQUESTS_PER_HOUR = int(st.secrets.get("MAX_REQUESTS_PER_HOUR", 50))
+# CORRECTED: Just reference the secrets keys - no default values needed
+HUGGINGFACE_API_KEY = st.secrets["HUGGINGFACE_API_KEY"]
+MODEL_NAME = st.secrets["MODEL_NAME"]
+EMBEDDING_MODEL = st.secrets["EMBEDDING_MODEL"]
+FALLBACK_MODEL = st.secrets["FALLBACK_MODEL"]
+VECTOR_DB_PATH = st.secrets["VECTOR_DB_PATH"]
+COLLECTION_NAME = st.secrets["COLLECTION_NAME"]
+MAX_REQUESTS_PER_HOUR = int(st.secrets["MAX_REQUESTS_PER_HOUR"])
 
-# Classifier settings - SECURE
-CLASSIFIER_URL = st.secrets.get("CLASSIFIER_URL", "")
-CLASSIFIER_AUTH = st.secrets.get("CLASSIFIER_AUTH", "")
-CLASSIFIER_POLICY = st.secrets.get("CLASSIFIER_POLICY", "always")
-CLASSIFIER_MODE = st.secrets.get("CLASSIFIER_MODE", "remote")
+# Classifier settings
+CLASSIFIER_URL = st.secrets["CLASSIFIER_URL"]
+CLASSIFIER_AUTH = st.secrets["CLASSIFIER_AUTH"]
+CLASSIFIER_POLICY = st.secrets["CLASSIFIER_POLICY"]
+CLASSIFIER_MODE = st.secrets["CLASSIFIER_MODE"]
 
 # Severity settings
-SEVERITY_ALERT_P = float(st.secrets.get("SEVERITY_ALERT_P", "0.60"))
-SEVERITY_HIGH_LABELS = st.secrets.get("SEVERITY_HIGH_LABELS", "red,crisis,severe,very_high,urgent").split(",")
-SEVERITY_ALERT_CONTAINS = st.secrets.get("SEVERITY_ALERT_CONTAINS", "red,crisis,severe,high,urgent").split(",")
+SEVERITY_ALERT_P = float(st.secrets["SEVERITY_ALERT_P"])
+SEVERITY_HIGH_LABELS = st.secrets["SEVERITY_HIGH_LABELS"].split(",")
+SEVERITY_ALERT_CONTAINS = st.secrets["SEVERITY_ALERT_CONTAINS"].split(",")
 
 # RAG settings
-MIN_EXCHANGES_BEFORE_RAG = int(st.secrets.get("MIN_EXCHANGES_BEFORE_RAG", 1))
-ENABLE_RERANK = st.secrets.get("ENABLE_RERANK", "true").lower() == "true"
-RERANK_MODEL_NAME = st.secrets.get("RERANK_MODEL_NAME", "cross-encoder/ms-marco-MiniLM-L-6-v2")
-RERANK_CANDIDATES = int(st.secrets.get("RERANK_CANDIDATES", 12))
-RERANK_TOP_K = int(st.secrets.get("RERANK_TOP_K", 4))
+MIN_EXCHANGES_BEFORE_RAG = int(st.secrets["MIN_EXCHANGES_BEFORE_RAG"])
+ENABLE_RERANK = st.secrets["ENABLE_RERANK"].lower() == "true"
+RERANK_MODEL_NAME = st.secrets["RERANK_MODEL_NAME"]
+RERANK_CANDIDATES = int(st.secrets["RERANK_CANDIDATES"])
+RERANK_TOP_K = int(st.secrets["RERANK_TOP_K"])
 
 # Other settings
-HF_PROVIDER = st.secrets.get("HF_PROVIDER", "Auto")
-ASSUME_YES = st.secrets.get("ASSUME_YES", "true").lower() == "true"
-SKILL_GRACE_TURNS = int(st.secrets.get("SKILL_GRACE_TURNS", 2))
-SKILL_COOLDOWN_TURNS = int(st.secrets.get("SKILL_COOLDOWN_TURNS", 2))
+HF_PROVIDER = st.secrets["HF_PROVIDER"]
+ASSUME_YES = st.secrets["ASSUME_YES"].lower() == "true"
+SKILL_GRACE_TURNS = int(st.secrets["SKILL_GRACE_TURNS"])
+SKILL_COOLDOWN_TURNS = int(st.secrets["SKILL_COOLDOWN_TURNS"])
 
-# Set HF token SECURELY
+# Set HF token
 if HUGGINGFACE_API_KEY:
     os.environ["HUGGINGFACEHUB_API_TOKEN"] = HUGGINGFACE_API_KEY
     os.environ["HUGGINGFACE_HUB_TOKEN"] = HUGGINGFACE_API_KEY
@@ -940,4 +940,3 @@ def process_user_input(user_text: str, vectorstore: Optional[Chroma]):
 
 if __name__ == "__main__":
     main()
-
