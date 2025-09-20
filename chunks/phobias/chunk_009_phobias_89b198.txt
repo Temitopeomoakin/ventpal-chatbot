@@ -1,0 +1,8 @@
+[source_pdf: phobias.txt] [therapy_type: CBT] [subtype: Phobia Self-Help] [audience: General Adult] [language: en]
+phobias
+Activity
+Write down a list of situations that you avoid and any safety behaviours that you use because of your phobia.
+Avoidance and safety behaviours
+What situations do you avoid because of your phobia?
+What safety behaviours do you use?
+10

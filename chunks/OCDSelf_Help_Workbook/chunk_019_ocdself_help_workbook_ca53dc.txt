@@ -1,0 +1,4 @@
+[source_pdf: OCDSelf_Help_Workbook.txt] [therapy_type: CBT] [subtype: OCD Self-Help Workbook (Alternate)] [audience: General Adult] [language: en]
+OCDSelf_Help_Workbook
+Write what you think would happen if you did not carry out your rituals?
+21

@@ -1,0 +1,3 @@
+[source_pdf: Unhelpful_Thoughts.txt] [therapy_type: CBT] [subtype: Unhelpful Thoughts Self-Help] [audience: General Adult] [language: en]
+Unhelpful_Thoughts
+8 9

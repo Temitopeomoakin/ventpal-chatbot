@@ -1,0 +1,6 @@
+[source_pdf: PsychologicalDistressWorkbook.txt] [therapy_type: DBT] [subtype: Distress Tolerance Skills (DBT-informed)] [audience: General Adult] [language: en]
+PsychologicalDistressWorkbook
+The 4 core themes of DBT are emotion regulation (managing emotions), interpersonal effectiveness (otherwise known as communication skills), distress tolerance and mindfulness. This booklet contains some techniques from each of these areas that you can try for yourself and choose which work for you.
+On either side of the diagram, you can see “acceptance” and “change”.
+In DBT there is a term called dialectics, which means that two things that seem the opposite of the other can be true. One of the most important dialectics of DBT is that you can accept yourself and change yourself at the same time. So you can accept that you are human and that you are doing your best, but that you can also change and learn how to do things even better in the future.
+16

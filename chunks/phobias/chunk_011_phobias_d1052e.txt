@@ -1,0 +1,10 @@
+[source_pdf: phobias.txt] [therapy_type: CBT] [subtype: Phobia Self-Help] [audience: General Adult] [language: en]
+phobias
+Facing your fears
+What would actually happen?
+This graph shows what would actually happen if we were to face an anxiety provoking situation without the support of safety behaviours.
+As you can see, anxiety goes up quickly when entering a feared situation, but with time (usually after approximately
+20 minutes) will go down again. We also have the opportunity to challenge anxious thoughts and predictions about what happens when we encounter our phobia.
+With repeated exposure to the same feared situations, your anxiety will become progressively less severe and more tolerable. This process is known as ‘desensitisation’ or
+‘habituation’, where the situation is so familiar that it no longer appears threatening. This is very effective for treating phobias.
+12

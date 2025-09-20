@@ -1,0 +1,16 @@
+[source_pdf: OCDSelf_Help_Workbook.txt] [therapy_type: CBT] [subtype: OCD Self-Help Workbook (Alternate)] [audience: General Adult] [language: en]
+OCDSelf_Help_Workbook
+MY GOALS
+Goal number 1 Todays Date:
+How difficult is this goal to do now? (circle a number):
+0 1 2 3 4 5 6 7 8
+Not at all Slightly Moderately Very much Extremely
+Goal number 2
+How difficult is this goal to do now? (circle a number):
+0 1 2 3 4 5 6 7 8
+Not at all Slightly Moderately Very much Extremely
+Goal number 3
+How difficult is this goal to do now? (circle a number):
+0 1 2 3 4 5 6 7 8
+Not at all Slightly Moderately Very much Extremely
+19

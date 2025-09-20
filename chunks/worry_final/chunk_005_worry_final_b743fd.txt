@@ -1,0 +1,9 @@
+[source_pdf: worry_final.txt] [therapy_type: CBT] [subtype: Worry Management (Alternate)] [audience: General Adult] [language: en]
+worry_final
+Worry diary
+How anxious do you feel on Classify
+Situation
+Your worry a scale of 10? the worry
+(Where you are, what you are doing and what is going on around (What if…) (0 = not at all Practical (P)
+you) anxious, 10 = the or hypothetical most anxious you (H)
+have ever been)

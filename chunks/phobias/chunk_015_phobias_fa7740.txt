@@ -1,0 +1,6 @@
+[source_pdf: phobias.txt] [therapy_type: CBT] [subtype: Phobia Self-Help] [audience: General Adult] [language: en]
+phobias
+My graded hierarchy
+Fill in the blank graded hierarchy below.
+Situations Anxiety (0-100)
+16

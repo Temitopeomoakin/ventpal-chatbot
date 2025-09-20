@@ -1,0 +1,6 @@
+[source_pdf: ocd-workbook_final.txt] [therapy_type: CBT] [subtype: OCD Self-Help Workbook] [audience: General Adult] [language: en]
+ocd-workbook_final
+Monitoring your symptoms
+A useful way to identify your obsessions and compulsions is to keep a record of them and the level of anxiety or distress they cause you:
+Day/time Obsessive thought Compulsive behaviour Level of anxiety (0-10)
+6

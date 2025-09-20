@@ -1,0 +1,9 @@
+[source_pdf: problemsolving_final.txt] [therapy_type: CBT] [subtype: Problem Solving CBT (Alternate)] [audience: General Adult] [language: en]
+problemsolving_final
+Problem solving - the six steps
+Step 4: Choose a solution
+Identify the solutions you rated highly (that is those greater than six). If none were rated this high, try to generate a few more and continue the process.
+If there are a few ideas rated at least a six ask yourself if you think you can actually carry them out. If “yes”, include these ideas as part of your overall action plan. If not,
+identify other potentially effective solutions and continue this process.
+Chosen solution
+10
