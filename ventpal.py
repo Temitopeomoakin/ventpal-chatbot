@@ -1,5 +1,7 @@
-# ventpal.py — VentPal with Direct Implementations (No LangChain)
+
+# ventpal.py — VentPal with Fixed Vector Database
 # ----------------------------------------------------
+# Greeting → Emotion Check → Exploration → Consent → RAG with proper technique integration
 
 import os, sys, time, json, re, random, hashlib
 from typing import List, Tuple, Dict, Optional
@@ -15,10 +17,13 @@ os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
 import streamlit as st
 import requests
+from langchain.memory import ConversationBufferMemory
+from langchain.schema import HumanMessage, AIMessage
 
-# Direct imports - no langchain
-import chromadb
-from sentence_transformers import SentenceTransformer
+# Use OLD imports that match your database creation
+from langchain.vectorstores import Chroma
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain.docstore.document import Document
 from huggingface_hub import InferenceClient
 
 # ================================ SECURE Configuration ================================
@@ -32,8 +37,6 @@ st.set_page_config(
 # Session state initialization
 if "messages" not in st.session_state: 
     st.session_state.messages = []
-if "memory" not in st.session_state:
-    st.session_state.memory = []  # Simple list of messages
 if "request_count" not in st.session_state: 
     st.session_state.request_count = 0
 if "last_reset" not in st.session_state: 
@@ -54,6 +57,12 @@ if "turn_count" not in st.session_state:
     st.session_state.turn_count = 0
 if "ablation_mode" not in st.session_state: 
     st.session_state.ablation_mode = "full"
+if "memory" not in st.session_state:
+    st.session_state.memory = ConversationBufferMemory(
+        memory_key="chat_history",
+        return_messages=True,
+        output_key="response"
+    )
 
 # Load configuration from secrets
 HUGGINGFACE_API_KEY = st.secrets["HUGGINGFACE_API_KEY"]
@@ -87,148 +96,116 @@ ASSUME_YES = st.secrets["ASSUME_YES"].lower() == "true"
 SKILL_GRACE_TURNS = int(st.secrets["SKILL_GRACE_TURNS"])
 SKILL_COOLDOWN_TURNS = int(st.secrets["SKILL_COOLDOWN_TURNS"])
 
-# Initialize HuggingFace client
-client = InferenceClient(
-    api_key=HUGGINGFACE_API_KEY
-)
+# HuggingFace client
+client = InferenceClient(api_key=HUGGINGFACE_API_KEY)
 
-# ================================ Direct ChromaDB Implementation ================================
+# ================================ Styles ================================
+st.markdown("""
+<style>
+.debug-info {
+    font-size: 0.8em;
+    color: #666;
+    margin: 10px 0;
+    padding: 5px;
+    background: #f0f0f0;
+    border-radius: 3px;
+}
+.skill-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    margin: 2px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    font-weight: 500;
+}
+.classification-info {
+    font-size: 0.75em;
+    color: #888;
+    margin-top: 5px;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# ================================ Vector Store with Debugging ================================
 @st.cache_resource(show_spinner=False)
-def create_vector_store():
-    """Create vector store using chromadb directly"""
+def create_vector_store() -> Optional[Chroma]:
+    """Create vector store with debugging"""
     
     with st.sidebar:
         st.markdown(f"<div class='debug-info'>Vector DB: {VECTOR_DB_PATH}<br>Collection: {COLLECTION_NAME}<br>Embedding: {EMBEDDING_MODEL}<br>Rerank: {ENABLE_RERANK}</div>", unsafe_allow_html=True)
     
-    if not os.path.exists(VECTOR_DB_PATH):
-        st.sidebar.error(f"❌ Vector database not found at: {VECTOR_DB_PATH}")
-        return None
+    # DEBUG: Check current directory and files
+    st.sidebar.info(f"Current directory: {os.getcwd()}")
+    st.sidebar.info(f"Files in current dir: {os.listdir('.')[:10]}")  # Show first 10 files
+    
+    # Check if vector_db_new exists
+    if os.path.exists(VECTOR_DB_PATH):
+        st.sidebar.success(f"✓ Found {VECTOR_DB_PATH}")
+        st.sidebar.info(f"Contents: {os.listdir(VECTOR_DB_PATH)[:5]}")  # Show first 5 files
+        
+        # Check for chroma.sqlite3
+        db_file = os.path.join(VECTOR_DB_PATH, "chroma.sqlite3")
+        if os.path.exists(db_file):
+            st.sidebar.success(f"✓ Found database file")
+            file_size = os.path.getsize(db_file) / (1024*1024)  # Size in MB
+            st.sidebar.info(f"Database size: {file_size:.2f} MB")
+        else:
+            st.sidebar.warning(f"⚠️ No chroma.sqlite3 in {VECTOR_DB_PATH}")
+    else:
+        st.sidebar.error(f"✗ {VECTOR_DB_PATH} not found")
+        st.sidebar.info(f"Looking for alternatives...")
+        
+        # Try to find it in different locations
+        possible_paths = [
+            "vector_db_new",
+            "./vector_db_new",
+            "../vector_db_new",
+            "ventpal-chatbot/vector_db_new",
+            "/mount/src/ventpal-chatbot/vector_db_new",
+            "/app/vector_db_new"
+        ]
+        
+        for path in possible_paths:
+            if os.path.exists(path):
+                st.sidebar.success(f"✓ Found database at: {path}")
+                st.sidebar.info(f"Update VECTOR_DB_PATH in secrets to: {path}")
+                VECTOR_DB_PATH = path  # Use found path
+                break
     
     try:
         st.sidebar.info("🔄 Loading embedding model...")
         
-        # Load embedding model directly
-        embedder = SentenceTransformer(EMBEDDING_MODEL)
+        embeddings = HuggingFaceEmbeddings(
+            model_name=EMBEDDING_MODEL,
+            model_kwargs={'device': 'cpu'},
+            encode_kwargs={'normalize_embeddings': True}
+        )
         
         st.sidebar.info("🔄 Connecting to vector database...")
         
-        # Connect directly to chromadb
-        chroma_client = chromadb.PersistentClient(path=VECTOR_DB_PATH)
+        vectorstore = Chroma(
+            collection_name=COLLECTION_NAME,
+            embedding_function=embeddings,
+            persist_directory=VECTOR_DB_PATH
+        )
         
-        # Try to get the collection - try both names
-        collection = None
-        for name in [COLLECTION_NAME, f"my_{COLLECTION_NAME}"]:
-            try:
-                collection = chroma_client.get_collection(name=name)
-                st.sidebar.success(f"✅ Connected to collection: {name}")
-                break
-            except:
-                continue
+        # Test the connection
+        try:
+            test_results = vectorstore.similarity_search("test", k=1)
+            st.sidebar.success(f"✅ Connected to vector database!")
+        except:
+            st.sidebar.warning("⚠️ Database connected but might be empty")
         
-        if not collection:
-            st.sidebar.error("❌ Could not find collection in database")
-            return None
-        
-        # Return both the collection and embedder
-        return collection, embedder
+        return vectorstore
         
     except Exception as e:
         st.sidebar.error(f"❌ Vector store error: {str(e)}")
-        st.sidebar.info("""
-        🔧 SOLUTION:
-        
-        The vector database needs to be accessible.
-        Check that the path and collection name match.
-        """)
         return None
 
-# ================================ RAG Search Function ================================
-def search_documents(query: str, k: int = 4):
-    """Search for relevant documents"""
-    
-    result = create_vector_store()
-    if not result:
-        return []
-    
-    collection, embedder = result
-    
-    try:
-        # Embed the query
-        query_embedding = embedder.encode(query).tolist()
-        
-        # Search in ChromaDB
-        results = collection.query(
-            query_embeddings=[query_embedding],
-            n_results=k
-        )
-        
-        # Format results
-        documents = []
-        if results and results['documents']:
-            for i, doc in enumerate(results['documents'][0]):
-                metadata = results['metadatas'][0][i] if results['metadatas'] else {}
-                documents.append({
-                    'content': doc,
-                    'metadata': metadata
-                })
-        
-        return documents
-        
-    except Exception as e:
-        st.error(f"Search error: {str(e)}")
-        return []
-
-# ================================ LLM Call Function ================================
-def llm_call(prompt: str, use_rag: bool = False) -> str:
-    """Call LLM with or without RAG context"""
-    
-    # Add RAG context if needed
-    if use_rag:
-        docs = search_documents(prompt, k=RERANK_TOP_K if ENABLE_RERANK else 4)
-        if docs:
-            context = "\n\n".join([d['content'] for d in docs])
-            prompt = f"""Based on the following CBT resources:
-
-{context}
-
-User question: {prompt}
-
-Please provide a helpful response based on the CBT techniques described above:"""
-    
-    # Add conversation memory
-    if st.session_state.memory:
-        memory_context = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.memory[-4:]])
-        prompt = f"Previous conversation:\n{memory_context}\n\nCurrent message: {prompt}"
-    
-    try:
-        # Call HuggingFace
-        response = client.chat_completion(
-            model=MODEL_NAME,
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=256,
-            temperature=0.7
-        )
-        
-        return response.choices[0].message.content
-        
-    except Exception as e:
-        # Fallback model
-        try:
-            response = client.chat_completion(
-                model=FALLBACK_MODEL,
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=256,
-                temperature=0.7
-            )
-            return response.choices[0].message.content
-        except:
-            return f"I apologize, but I'm having trouble connecting right now. Please try again in a moment."
-
 # ================================ Classifier ================================
-def classify(text: str) -> Optional[Dict]:
-    """Call the classifier service"""
-    
-    if st.session_state.ablation_mode == "no_classifier":
+def classify(text: str, use_classifier: bool = True) -> Optional[Dict]:
+    """Classifier with ablation study support"""
+    if not use_classifier or st.session_state.ablation_mode in ["no_classifier", "baseline"]:
         return None
     
     if not CLASSIFIER_URL:
@@ -245,26 +222,124 @@ def classify(text: str) -> Optional[Dict]:
         if response.status_code == 200:
             return response.json()
         return None
-        
     except:
         return None
 
-# ================================ Main Chat Interface ================================
+# ================================ LLM Call ================================
+def llm_call(prompt: str, system_prompt: str = None) -> str:
+    """Call LLM with HuggingFace"""
+    
+    messages = []
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+    
+    # Add memory context
+    if st.session_state.memory and st.session_state.memory.chat_memory:
+        for msg in st.session_state.memory.chat_memory.messages[-6:]:
+            if isinstance(msg, HumanMessage):
+                messages.append({"role": "user", "content": msg.content})
+            elif isinstance(msg, AIMessage):
+                messages.append({"role": "assistant", "content": msg.content})
+    
+    messages.append({"role": "user", "content": prompt})
+    
+    try:
+        response = client.chat_completion(
+            model=MODEL_NAME,
+            messages=messages,
+            max_tokens=256,
+            temperature=0.7
+        )
+        return response.choices[0].message.content
+    except:
+        # Fallback
+        try:
+            response = client.chat_completion(
+                model=FALLBACK_MODEL,
+                messages=messages,
+                max_tokens=256,
+                temperature=0.7
+            )
+            return response.choices[0].message.content
+        except:
+            return "I apologize, but I'm having trouble connecting right now. Please try again."
+
+# ================================ RAG Search ================================
+def search_rag(query: str, k: int = 4) -> List[Document]:
+    """Search vector database for relevant documents"""
+    if st.session_state.ablation_mode in ["no_rag", "baseline"]:
+        return []
+    
+    vectorstore = create_vector_store()
+    if not vectorstore:
+        return []
+    
+    try:
+        results = vectorstore.similarity_search(query, k=k)
+        return results
+    except:
+        return []
+
+# ================================ Generate Response ================================
+def generate_response(user_input: str) -> str:
+    """Generate response with optional RAG and classification"""
+    
+    # Classify input
+    classification = classify(user_input)
+    
+    # Determine if RAG should be used
+    use_rag = False
+    if st.session_state.ablation_mode not in ["no_rag", "baseline"]:
+        if len(st.session_state.messages) >= MIN_EXCHANGES_BEFORE_RAG * 2:
+            use_rag = True
+    
+    # Build prompt
+    prompt = user_input
+    system_prompt = "You are VentPal, a supportive mental health companion trained in CBT techniques."
+    
+    # Add RAG context if applicable
+    if use_rag:
+        docs = search_rag(user_input, k=RERANK_TOP_K if ENABLE_RERANK else 4)
+        if docs:
+            context = "\n\n".join([doc.page_content for doc in docs[:3]])
+            system_prompt += f"\n\nUse these CBT resources to inform your response:\n{context}"
+    
+    # Add classification context if available
+    if classification:
+        emotion = classification.get("emotion_label", "neutral")
+        severity = classification.get("severity_label", "low")
+        system_prompt += f"\n\nUser's emotional state: {emotion} (severity: {severity})"
+    
+    # Generate response
+    response = llm_call(prompt, system_prompt)
+    
+    # Store in memory
+    st.session_state.memory.chat_memory.add_user_message(user_input)
+    st.session_state.memory.chat_memory.add_ai_message(response)
+    
+    return response
+
+# ================================ Main Interface ================================
 def main():
-    # Sidebar
+    # Sidebar controls
     with st.sidebar:
         st.markdown("### 🔬 Thesis Controls")
         
-        # Ablation controls
+        # System status
         st.markdown("#### 🧩 System Status")
         col1, col2 = st.columns(2)
-        with col1:
-            classifier_status = "active ✓" if st.session_state.ablation_mode != "no_classifier" else "disabled"
-            st.markdown(f"**Classifier**<br>{classifier_status}", unsafe_allow_html=True)
-        with col2:
-            rag_status = "active ✓" if st.session_state.ablation_mode != "no_rag" else "disabled"
-            st.markdown(f"**RAG**<br>{rag_status}", unsafe_allow_html=True)
         
+        with col1:
+            classifier_active = st.session_state.ablation_mode not in ["no_classifier", "baseline"]
+            status = "active ✓" if classifier_active else "disabled"
+            st.markdown(f"**Classifier**<br>{status}", unsafe_allow_html=True)
+        
+        with col2:
+            rag_active = st.session_state.ablation_mode not in ["no_rag", "baseline"]
+            status = "active ✓" if rag_active else "disabled"
+            st.markdown(f"**RAG**<br>{status}", unsafe_allow_html=True)
+        
+        # Ablation study controls
         st.markdown("#### Ablation Study")
         ablation_mode = st.selectbox(
             "System Configuration:",
@@ -280,9 +355,12 @@ def main():
         if ablation_mode != st.session_state.ablation_mode:
             st.session_state.ablation_mode = ablation_mode
             st.rerun()
+        
+        # Initialize vector store
+        create_vector_store()
     
     # Main chat interface
-    st.title("💨 VentPal - Mental Health Support")
+    st.title("💨 VentPal - Mental Health Support Chatbot")
     
     # Display messages
     for message in st.session_state.messages:
@@ -291,37 +369,22 @@ def main():
     
     # Chat input
     if prompt := st.chat_input("How are you feeling today?"):
-        # Add to messages
+        # Add user message
         st.session_state.messages.append({"role": "user", "content": prompt})
-        st.session_state.memory.append({"role": "user", "content": prompt})
-        
         with st.chat_message("user"):
             st.markdown(prompt)
         
-        # Classify if enabled
-        classification = None
-        if st.session_state.ablation_mode not in ["no_classifier", "baseline"]:
-            classification = classify(prompt)
-        
-        # Determine if RAG should be used
-        use_rag = False
-        if st.session_state.ablation_mode not in ["no_rag", "baseline"]:
-            if len(st.session_state.messages) >= MIN_EXCHANGES_BEFORE_RAG * 2:
-                use_rag = True
-        
-        # Generate response
+        # Generate and display response
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
-                response = llm_call(prompt, use_rag=use_rag)
+                response = generate_response(prompt)
                 st.markdown(response)
         
-        # Add to messages
+        # Add assistant message
         st.session_state.messages.append({"role": "assistant", "content": response})
-        st.session_state.memory.append({"role": "assistant", "content": response})
         
-        # Keep memory limited
-        if len(st.session_state.memory) > 10:
-            st.session_state.memory = st.session_state.memory[-10:]
+        # Update turn count
+        st.session_state.turn_count += 1
 
 if __name__ == "__main__":
     main()
