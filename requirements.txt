@@ -1,27 +1,36 @@
-# Core
+# Streamlit + HTTP
 streamlit>=1.32.0
 requests>=2.31.0
 
-# CRITICAL: Pin NumPy to 1.x
-numpy==1.26.4
 
-# LangChain - older versions
-langchain==0.0.350
-langchain-community==0.0.20
+# LangChain core (for memory/messages) + split packages for embeddings/vectorstores
+langchain>=0.2.14,<0.4
+langchain-community>=0.2.14,<0.4
+langchain-huggingface>=0.1.0,<0.3
+langchain-chroma>=0.1.0,<0.3
 
-# Vector DB - older version
-chromadb==0.4.15
 
-# Embeddings
+# Vector DB (native Chroma persistence)
+chromadb>=1.0.19,<1.1
+
+
+# Embeddings + Transformers stack
 sentence-transformers>=2.6.1,<3
-transformers>=4.40.0,<5
+transformers>=4.55.0,<5
 huggingface-hub>=0.22.0
+accelerate>=1.0.0,<2
+safetensors>=0.4.3,<1
 
-# SQLite shim
+
+# SQLite shim for Chroma on some Linux hosts
 pysqlite3-binary>=0.5.4,<0.6 ; platform_system != "Windows"
 
-# Protobuf
+
+# Older protobuf to avoid segfaults on some hosts
 protobuf==3.20.3
 
-# Utils
+
+# Nice-to-haves (safe)
 orjson>=3.9.10
+
+
