@@ -19,9 +19,8 @@ import requests
 from langchain.memory import ConversationBufferMemory
 from langchain.schema import HumanMessage, AIMessage
 
-# FIXED IMPORTS - Updated to match your working Colab code
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma  # Updated import
+from langchain.vectorstores import Chroma  
 
 from huggingface_hub import InferenceClient
 
@@ -57,17 +56,16 @@ if "retrieval_history" not in st.session_state:
 if "ablation_mode" not in st.session_state:
     st.session_state.ablation_mode = "full_system"
 
-# Load secrets with FIXED defaults to match your Colab setup
-HUGGINGFACE_API_KEY = st.secrets.get("HUGGINGFACE_API_KEY", "")
-MODEL_NAME = st.secrets.get("MODEL_NAME", "meta-llama/Llama-4-Scout-17B-16E-Instruct")
-FALLBACK_MODEL = st.secrets.get("FALLBACK_MODEL", "HuggingFaceH4/zephyr-7b-beta")
-EMBEDDING_MODEL = st.secrets.get("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
-VECTOR_DB_PATH = st.secrets.get("VECTOR_DB_PATH", "vector_db_new")
-# FIXED: Use exact collection name from your Colab creation
-COLLECTION_NAME = st.secrets.get("COLLECTION_NAME", "cbt_docs_fresh_2024")
-CLASSIFIER_URL = st.secrets.get("CLASSIFIER_URL", "")
-CLASSIFIER_AUTH = st.secrets.get("CLASSIFIER_AUTH", "")
-MAX_REQUESTS_PER_HOUR = int(st.secrets.get("MAX_REQUESTS_PER_HOUR", 50))
+# Load secrets
+HUGGINGFACE_API_KEY = st.secrets["HUGGINGFACE_API_KEY"]
+MODEL_NAME = st.secrets["MODEL_NAME"]
+FALLBACK_MODEL = st.secrets["FALLBACK_MODEL"]
+EMBEDDING_MODEL = st.secrets["EMBEDDING_MODEL"]
+VECTOR_DB_PATH = st.secrets["VECTOR_DB_PATH"]
+COLLECTION_NAME = st.secrets["COLLECTION_NAME"]
+CLASSIFIER_URL = st.secrets["CLASSIFIER_URL"]
+CLASSIFIER_AUTH = st.secrets["CLASSIFIER_AUTH"]
+MAX_REQUESTS_PER_HOUR = int(st.secrets["MAX_REQUESTS_PER_HOUR"])
 
 # Set HF token
 if HUGGINGFACE_API_KEY:
@@ -185,9 +183,9 @@ def crisis_block() -> str:
         "I'm here with you. Are you able to stay safe for the next few minutes?"
     )
 
-# ================================ Classifier with Ablation - IMPROVED ================================
+# ================================ Classifier ================================
 def classify(text: str, use_classifier: bool = True) -> Optional[Dict]:
-    """Classifier with ablation study support - IMPROVED error handling"""
+    """Classifier with ablation study support"""
     if not use_classifier or st.session_state.ablation_mode in ["no_classifier", "baseline"]:
         return {
             "emotion": {"top": {"label": "neutral", "conf": 0.5}},
@@ -212,14 +210,12 @@ def classify(text: str, use_classifier: bool = True) -> Optional[Dict]:
         out = r.json()
         out["_latency_ms"] = int((time.time() - t0) * 1000)
         
-        # IMPROVED: Safe classification tracking with better error handling
         classification_entry = {
             "timestamp": datetime.now().isoformat(),
             "ablation_mode": st.session_state.ablation_mode,
             "latency_ms": out["_latency_ms"]
         }
         
-        # Safely extract classifications
         for task in ["emotion", "intent", "severity", "topic"]:
             if task in out and out[task] and isinstance(out[task], dict):
                 top_pred = out[task].get("top", {})
@@ -227,7 +223,6 @@ def classify(text: str, use_classifier: bool = True) -> Optional[Dict]:
                     classification_entry[task] = top_pred["label"]
         
         st.session_state.classifier_history.append(classification_entry)
-        
         return out
         
     except requests.exceptions.Timeout:
@@ -241,7 +236,7 @@ def classify(text: str, use_classifier: bool = True) -> Optional[Dict]:
         return None
 
 def _top(head: Optional[Dict], default_label="unknown", default_conf: float = 0.0) -> Tuple[str, float]:
-    """IMPROVED: Safer extraction of top prediction"""
+    """Safer extraction of top prediction"""
     if not head or not isinstance(head, dict):
         return default_label, default_conf
     
@@ -253,22 +248,37 @@ def _top(head: Optional[Dict], default_label="unknown", default_conf: float = 0.
     conf = float(top.get("conf", default_conf))
     return label, conf
 
-# ================================ RAG with IMPROVED Vector Store Loading ================================
+# ================================ Vector Store ================================
 @st.cache_resource(show_spinner=False)
 def create_vector_store() -> Optional[Chroma]:
-    """IMPROVED: Create or load vector store with better error handling and debugging"""
+    """Create or load vector store"""
     
-    # Debug info in sidebar
     with st.sidebar:
         st.markdown(f"<div class='debug-info'>Vector DB Path: {VECTOR_DB_PATH}<br>Collection: {COLLECTION_NAME}<br>Embedding Model: {EMBEDDING_MODEL}</div>", unsafe_allow_html=True)
     
+    # DEBUG: Check where we are and what files exist
     if not os.path.exists(VECTOR_DB_PATH):
-        st.sidebar.error(f"❌ Vector DB directory not found: `{VECTOR_DB_PATH}`")
-        st.sidebar.info("💡 Make sure your vector database is uploaded to the correct path")
-        return None
+        st.sidebar.warning(f"⚠️ {VECTOR_DB_PATH} not found in current directory")
+        st.sidebar.info(f"Current directory: {os.getcwd()}")
+        
+        # Check if it exists in other common locations
+        possible_paths = [
+            os.path.join(os.getcwd(), "vector_db_new"),
+            "/mount/src/ventpal-chatbot/vector_db_new",
+            "../vector_db_new"
+        ]
+        
+        for path in possible_paths:
+            if os.path.exists(path):
+                st.sidebar.success(f"✅ Found database at: {path}")
+                st.sidebar.info(f"Update your secrets.toml:")
+                st.sidebar.code(f'VECTOR_DB_PATH = "{path}"')
+                break
+        else:
+            st.sidebar.error("❌ Vector database not found in any expected location")
+            return None
     
     try:
-        # IMPROVED: Better embedding initialization
         st.sidebar.info("🔄 Loading embedding model...")
         embeddings = HuggingFaceEmbeddings(
             model_name=EMBEDDING_MODEL,
@@ -276,37 +286,24 @@ def create_vector_store() -> Optional[Chroma]:
             encode_kwargs={"normalize_embeddings": True}
         )
         
-        # IMPROVED: More robust vector store initialization
         st.sidebar.info("🔄 Connecting to vector database...")
         vectorstore = Chroma(
-            collection_name=COLLECTION_NAME,  # Use exact name from your creation
+            collection_name=COLLECTION_NAME,
             embedding_function=embeddings,
             persist_directory=VECTOR_DB_PATH
         )
         
-        # IMPROVED: Better testing with multiple queries
+        # Test the connection
         st.sidebar.info("🔄 Testing database connection...")
-        test_queries = ["stress", "anxiety", "depression", "help"]
-        total_docs = 0
+        test_docs = vectorstore.similarity_search("stress", k=1)
         
-        for query in test_queries:
-            try:
-                test_docs = vectorstore.similarity_search(query, k=1)
-                total_docs += len(test_docs)
-                if test_docs:
-                    break  # Found working connection
-            except Exception as e:
-                st.sidebar.warning(f"Test query '{query}' failed: {str(e)[:50]}")
-                continue
-        
-        if total_docs > 0:
+        if test_docs:
             st.sidebar.success(f"✅ Vector DB loaded successfully")
             st.sidebar.info(f"📊 Collection: {COLLECTION_NAME}")
             st.sidebar.info(f"🤖 Embedding: {EMBEDDING_MODEL}")
-            st.sidebar.info(f"🔍 Test queries found {total_docs} documents")
+            st.sidebar.info(f"🔍 Test found {len(test_docs)} documents")
         else:
             st.sidebar.warning("⚠️ Vector DB connected but no documents found")
-            st.sidebar.info("💡 Check if your collection name matches the one used during creation")
         
         return vectorstore
         
@@ -314,21 +311,17 @@ def create_vector_store() -> Optional[Chroma]:
         error_msg = str(e)
         st.sidebar.error(f"❌ Vector store error: {error_msg[:100]}")
         
-        # IMPROVED: Specific error guidance
         if "no such column" in error_msg.lower():
             st.sidebar.info("💡 This looks like a collection name mismatch. Try:")
             st.sidebar.code('COLLECTION_NAME = "cbt_docs_fresh_2024"')
         elif "no such table" in error_msg.lower():
             st.sidebar.info("💡 Database schema issue. You may need to recreate the vector store.")
-        elif "permission" in error_msg.lower():
-            st.sidebar.info("💡 File permission issue. Check if the database files are readable.")
         
         return None
 
 def get_relevant_context(query: str, vectorstore: Optional[Chroma], use_rag: bool = True) -> Tuple[str, List[str]]:
-    """IMPROVED: RAG with better error handling and ablation study support"""
+    """RAG with ablation study support"""
     if not use_rag or st.session_state.ablation_mode in ["no_rag", "baseline"]:
-        # Track attempted retrieval for ablation
         st.session_state.retrieval_history.append({
             "timestamp": datetime.now().isoformat(),
             "ablation_mode": st.session_state.ablation_mode,
@@ -344,7 +337,6 @@ def get_relevant_context(query: str, vectorstore: Optional[Chroma], use_rag: boo
         return "", []
     
     try:
-        # IMPROVED: Better similarity search with error handling
         relevant_docs = vectorstore.similarity_search(query, k=3)
         
         if not relevant_docs:
@@ -359,14 +351,12 @@ def get_relevant_context(query: str, vectorstore: Optional[Chroma], use_rag: boo
                 continue
                 
             content = doc.page_content.strip()
-            if content and len(content) > 50:  # Minimum content length
-                # IMPROVED: Better content truncation
+            if content and len(content) > 50:
                 max_length = 1000
                 if len(content) > max_length:
                     content = content[:max_length] + "…"
                 chunks.append(content)
                 
-                # IMPROVED: Better metadata extraction
                 metadata = getattr(doc, 'metadata', {}) or {}
                 title = (metadata.get("source") or 
                         metadata.get("title") or 
@@ -374,7 +364,6 @@ def get_relevant_context(query: str, vectorstore: Optional[Chroma], use_rag: boo
                         "CBT/DBT Guide")
                 titles.append(str(title))
         
-        # Track retrieval with more details
         st.session_state.retrieval_history.append({
             "timestamp": datetime.now().isoformat(),
             "ablation_mode": st.session_state.ablation_mode,
@@ -386,7 +375,6 @@ def get_relevant_context(query: str, vectorstore: Optional[Chroma], use_rag: boo
         
         context = "\n\n".join(chunks)
         
-        # Debug info
         if chunks:
             st.sidebar.info(f"📚 Retrieved {len(chunks)} relevant chunks ({len(context)} chars)")
         
@@ -396,7 +384,7 @@ def get_relevant_context(query: str, vectorstore: Optional[Chroma], use_rag: boo
         st.sidebar.warning(f"🔍 Retrieval error: {str(e)[:50]}")
         return "", []
 
-# ================================ IMPROVED LLM with Better Error Handling ================================
+# ================================ LLM ================================
 @st.cache_resource
 def hf_client_primary() -> InferenceClient:
     return InferenceClient(model=MODEL_NAME, token=HUGGINGFACE_API_KEY, timeout=120)
@@ -406,7 +394,7 @@ def hf_client_fallback() -> InferenceClient:
     return InferenceClient(model=FALLBACK_MODEL, token=HUGGINGFACE_API_KEY, timeout=120)
 
 def generate_therapy_response(user_text: str, stage: str, emotion: str, context: str = "") -> str:
-    """IMPROVED: Generate response with better prompt engineering and error handling"""
+    """Generate response with better prompt engineering"""
     
     # Get conversation memory
     memory = []
@@ -416,7 +404,7 @@ def generate_therapy_response(user_text: str, stage: str, emotion: str, context:
         memory.append(f"{role}: {content}")
     memory_str = "\n".join(memory) if memory else "Start of session"
     
-    # IMPROVED: Better prompt engineering based on ablation mode
+    # Build prompts based on ablation mode
     if st.session_state.ablation_mode == "baseline":
         system_prompt = "You are a helpful mental health support chatbot. Be supportive, empathetic, and ask helpful questions. Keep responses under 100 words."
         user_prompt = f"User said: {user_text}\n\nRespond supportively and helpfully."
@@ -436,7 +424,7 @@ Provide support using your general knowledge of CBT and DBT techniques.
 Keep responses under 100 words."""
         user_prompt = f"Conversation context: {memory_str}\nUser's message: {user_text}\n\nProvide supportive response for {stage} stage."
         
-    else:  # full_system - IMPROVED prompts
+    else:  # full_system
         if stage == "greeting":
             system_prompt = """You are VentPal, a warm and professional mental health support companion. 
 This is the start of a therapy session. Be welcoming, establish rapport, and gently check in.
@@ -477,7 +465,7 @@ Current message: {user_text}
 The user has explained their situation. Offer to share helpful CBT/DBT techniques, 
 but ask for consent first. Be warm and collaborative."""
             
-        else:  # support stage - IMPROVED with better context integration
+        else:  # support stage
             system_prompt = f"""You are VentPal, providing evidence-based mental health support.
 IMPORTANT: Use the provided CBT/DBT techniques in your response.
 
@@ -491,10 +479,9 @@ User emotion: {emotion}. Keep under 120 words. Be warm but practical."""
             
             context_summary = ""
             if context:
-                # Extract key techniques from context
                 context_lines = [line.strip() for line in context.split('\n') if line.strip()]
                 technique_lines = []
-                for line in context_lines[:10]:  # First 10 lines
+                for line in context_lines[:10]:
                     if any(word in line.lower() for word in ['technique', 'try', 'practice', 'step', 'breathe', 'ground']):
                         technique_lines.append(line[:150])
                         if len(technique_lines) >= 2:
@@ -511,7 +498,7 @@ CBT/DBT Techniques to integrate:
 Follow the response structure. If they mentioned helping others, connect this to self-compassion.
 Use actual techniques from the context - don't create generic advice."""
     
-    # IMPROVED: Better LLM calling with fallback
+    # Call LLM with fallback
     try:
         completion = hf_client_primary().chat.completions.create(
             model=MODEL_NAME,
@@ -524,7 +511,6 @@ Use actual techniques from the context - don't create generic advice."""
         )
         response = completion.choices[0].message.content
         
-        # Basic response validation
         if len(response.strip()) < 10:
             raise ValueError("Response too short")
             
@@ -533,7 +519,6 @@ Use actual techniques from the context - don't create generic advice."""
     except Exception as primary_error:
         st.sidebar.warning(f"Primary model failed: {str(primary_error)[:50]}")
         
-        # Try fallback model
         try:
             completion = hf_client_fallback().chat.completions.create(
                 model=FALLBACK_MODEL,
@@ -551,11 +536,10 @@ Use actual techniques from the context - don't create generic advice."""
         except Exception as fallback_error:
             st.sidebar.error(f"Both models failed: {str(fallback_error)[:50]}")
             
-            # IMPROVED: Contextual fallback responses
+            # Contextual fallback responses
             user_name = st.session_state.get("user_name", "there")
             
             if stage == "support" and context:
-                # Try to extract a technique from context
                 context_lines = context.split('\n')
                 technique = ""
                 for line in context_lines:
@@ -568,7 +552,6 @@ Use actual techniques from the context - don't create generic advice."""
                 else:
                     return f"I hear what you're sharing. {technique if technique else 'When feeling overwhelmed, try the 5-4-3-2-1 grounding technique: name 5 things you can see, 4 you can touch, 3 you can hear, 2 you can smell, and 1 you can taste.'}\n\nHow do you think this might help your situation?"
             
-            # Standard fallbacks
             fallbacks = {
                 "greeting": f"Hello {user_name}! I'm VentPal, and I'm here to support you today. How are you feeling right now?",
                 "exploration": "I hear that you're going through a difficult time. Can you tell me a bit more about what's been weighing on your mind lately?",
@@ -578,22 +561,19 @@ Use actual techniques from the context - don't create generic advice."""
             return fallbacks.get(stage, "I'm here to support you. What would be most helpful for you right now?")
 
 def check_for_consent(text: str) -> bool:
-    """IMPROVED: Better consent detection"""
+    """Better consent detection"""
     if not text:
         return False
         
     text_lower = text.lower().strip()
     
-    # Strong consent indicators
     strong_yes = ["yes", "yeah", "sure", "okay", "ok", "please", "help me", "share them", "that would help"]
     if any(phrase in text_lower for phrase in strong_yes):
         return True
     
-    # Check for explicit no
     if any(phrase in text_lower for phrase in ["no", "not now", "not interested", "don't want"]):
         return False
     
-    # Moderate consent (questions or interest)
     moderate_yes = ["what are", "how do", "tell me more", "sounds good", "i'd like"]
     return any(phrase in text_lower for phrase in moderate_yes)
 
@@ -607,7 +587,7 @@ def rate_ok() -> bool:
 def rate_inc():
     st.session_state.request_count += 1
 
-# ================================ IMPROVED Main App ================================
+# ================================ Main App ================================
 def main():
     # Header
     st.markdown(
@@ -622,20 +602,19 @@ def main():
         st.error("❌ Missing HUGGINGFACE_API_KEY in secrets. Please add your HuggingFace token.")
         st.stop()
     
-    # IMPROVED: Initialize components with better error handling
+    # Initialize vector store
     vectorstore = None
     with st.spinner("🔄 Connecting to knowledge base..."):
         vectorstore = create_vector_store()
     
-    # Continue even if vector store fails (for ablation studies)
     if not vectorstore:
         st.warning("⚠️ Running without RAG capability. Some features may be limited.")
     
-    # IMPROVED: Sidebar with better organization
+    # Sidebar controls
     with st.sidebar:
         st.header("🔬 Thesis Controls")
         
-        # System status first
+        # System status
         st.subheader("🧩 System Status")
         classifier_active = st.session_state.ablation_mode not in ["no_classifier", "baseline"]
         rag_active = st.session_state.ablation_mode not in ["no_rag", "baseline"] and vectorstore is not None
@@ -668,7 +647,6 @@ def main():
             st.session_state.ablation_mode = selected_mode
             st.success(f"✓ Switched to: {ablation_options[selected_mode]}")
         
-        # Show current mode
         st.markdown(f"<div class='ablation-mode'>Active: {ablation_options[st.session_state.ablation_mode]}</div>", 
                    unsafe_allow_html=True)
         
@@ -688,7 +666,7 @@ def main():
         st.metric("Total Messages", len(st.session_state.messages))
         st.metric("Requests Used", f"{st.session_state.request_count}/{MAX_REQUESTS_PER_HOUR}")
         
-        # IMPROVED: Classification history display
+        # Classification history
         if st.session_state.classifier_history:
             st.subheader("🔭 Last Classification")
             last = st.session_state.classifier_history[-1]
@@ -701,7 +679,7 @@ def main():
             else:
                 st.caption("Classification disabled (ablation mode)")
         
-        # IMPROVED: Retrieval history
+        # Retrieval history
         if st.session_state.retrieval_history:
             st.subheader("📚 Last Retrieval")
             last_retrieval = st.session_state.retrieval_history[-1]
@@ -712,7 +690,7 @@ def main():
             else:
                 st.caption("RAG disabled (ablation mode)")
         
-        # Export thesis data
+        # Export data
         if st.button("📥 Export Thesis Data"):
             thesis_data = {
                 "session_info": {
@@ -744,7 +722,7 @@ def main():
                     del st.session_state[key]
             st.rerun()
     
-    # Name gate
+    # Name input
     name = st.text_input("👋 What should I call you?", 
                         value=st.session_state.get("user_name", ""), 
                         placeholder="Enter your name to start")
@@ -803,12 +781,12 @@ def main():
     process_user_input(user_text, vectorstore)
 
 def process_user_input(user_text: str, vectorstore: Optional[Chroma]):
-    """IMPROVED: Process user input with better error handling and flow"""
+    """Process user input with conversation flow"""
     
     with st.chat_message("user", avatar="👤"):
         st.markdown(user_text)
     
-    # Crisis check first
+    # Crisis check
     if detect_crisis_regex(user_text):
         msg = crisis_block()
         with st.chat_message("assistant", avatar="🤖"):
@@ -831,7 +809,7 @@ def process_user_input(user_text: str, vectorstore: Optional[Chroma]):
     emotion = "neutral"
     if clf and not clf.get("_ablation"):
         emo_lbl, emo_conf = _top(clf.get("emotion"), "neutral", 0.0)
-        if emo_conf > 0.3:  # Lower threshold for better sensitivity
+        if emo_conf > 0.3:
             emotion = emo_lbl
             st.session_state.current_emotion = emotion
     
@@ -856,7 +834,6 @@ def process_user_input(user_text: str, vectorstore: Optional[Chroma]):
             st.session_state.conversation_stage = "support"
             st.session_state.awaiting_consent = False
             
-            # Use RAG
             use_rag = st.session_state.ablation_mode not in ["no_rag", "baseline"]
             context, titles = get_relevant_context(user_text, vectorstore, use_rag)
             reply = generate_therapy_response(user_text, "support", emotion, context)

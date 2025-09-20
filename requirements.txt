@@ -2,15 +2,15 @@
 streamlit>=1.32.0
 requests>=2.31.0
 
-# CRITICAL: Pin NumPy to 1.x to avoid ChromaDB incompatibility
+# CRITICAL: Pin NumPy to 1.x
 numpy==1.26.4
 
-# LangChain
-langchain==0.1.20
-langchain-community==0.0.38
+# LangChain - older versions
+langchain==0.0.350
+langchain-community==0.0.20
 
-# Vector DB
-chromadb==0.4.22
+# Vector DB - older version
+chromadb==0.4.15
 
 # Embeddings
 sentence-transformers>=2.6.1,<3
