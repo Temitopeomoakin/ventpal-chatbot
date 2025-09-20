@@ -1,3 +1,4 @@
+
 # ventpal.py — VentPal with SECURE Configuration
 # ----------------------------------------------------
 # Greeting → Emotion Check → Exploration → Consent → RAG with proper technique integration
@@ -72,10 +73,10 @@ CLASSIFIER_AUTH = st.secrets["CLASSIFIER_AUTH"]
 CLASSIFIER_POLICY = st.secrets["CLASSIFIER_POLICY"]
 CLASSIFIER_MODE = st.secrets["CLASSIFIER_MODE"]
 
-# Severity settings
+# FIXED: These are already lists in your secrets - no .split() needed
 SEVERITY_ALERT_P = float(st.secrets["SEVERITY_ALERT_P"])
-SEVERITY_HIGH_LABELS = st.secrets["SEVERITY_HIGH_LABELS"].split(",")
-SEVERITY_ALERT_CONTAINS = st.secrets["SEVERITY_ALERT_CONTAINS"].split(",")
+SEVERITY_HIGH_LABELS = st.secrets["SEVERITY_HIGH_LABELS"]  # Already a list
+SEVERITY_ALERT_CONTAINS = st.secrets["SEVERITY_ALERT_CONTAINS"]  # Already a list
 
 # RAG settings
 MIN_EXCHANGES_BEFORE_RAG = int(st.secrets["MIN_EXCHANGES_BEFORE_RAG"])
