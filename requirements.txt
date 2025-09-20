@@ -2,7 +2,7 @@
 streamlit>=1.32.0
 requests>=2.31.0
 
-# LangChain - OLDER version before the redirect
+# LangChain - Compatible versions
 langchain==0.0.350
 chromadb==0.4.22
 
