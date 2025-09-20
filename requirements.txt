@@ -1,26 +1,21 @@
-# Streamlit + HTTP
+# Core
 streamlit>=1.32.0
 requests>=2.31.0
 
-# LangChain - Compatible versions
-langchain==0.0.350
+# Direct ChromaDB and embeddings
 chromadb==0.4.22
-
-# Embeddings + Transformers stack
 sentence-transformers>=2.6.1,<3
-transformers>=4.40.0,<5
-huggingface-hub>=0.22.0
-accelerate>=0.30.0,<1
-safetensors>=0.4.3,<1
 
-# SQLite shim for Chroma on some Linux hosts
+# HuggingFace
+huggingface-hub>=0.22.0
+transformers>=4.40.0,<5
+
+# SQLite shim
 pysqlite3-binary>=0.5.4,<0.6 ; platform_system != "Windows"
 
-# Older protobuf to avoid segfaults
+# Protobuf
 protobuf==3.20.3
 
-# Nice-to-haves
+# Utils
 orjson>=3.9.10
-
-# Translation (if needed)
 deep-translator>=1.11.4
