@@ -1,4 +1,4 @@
-# ventpal.py — VentPal with Natural Therapy Flow + High-Quality RAG with Reranking
+# ventpal.py — VentPal with Natural Therapy Flow + Fixed Response Integration
 # --------------------------------------------------------------------------
 # Greeting → Emotion Check → Exploration → Consent → RAG with proper technique integration
 
@@ -19,13 +19,13 @@ import requests
 from langchain.memory import ConversationBufferMemory
 from langchain.schema import HumanMessage, AIMessage
 
-# EXACT same imports as your working code
+# FIXED IMPORTS - Use same combination as your working code
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores import Chroma
 
 from huggingface_hub import InferenceClient
 
-# Import for reranking
+# Add reranking import
 try:
     from sentence_transformers import CrossEncoder
 except ImportError:
@@ -153,55 +153,20 @@ def create_vector_store() -> Optional[Chroma]:
             st.error(f"❌ Vector store error: {str(e)}")
         return None
 
-# ================================ Reranking ================================
+# Add reranker loading
 @st.cache_resource(show_spinner=False)
 def load_reranker():
-    """Load cross-encoder reranking model"""
+    """Load reranker model"""
     if not ENABLE_RERANK or CrossEncoder is None:
         return None
-    
     try:
-        with st.sidebar:
-            st.info("🔄 Loading reranker model...")
-        
-        reranker = CrossEncoder(RERANK_MODEL_NAME)
-        
-        with st.sidebar:
-            st.success("✅ Reranker loaded successfully!")
-        
-        return reranker
-        
-    except Exception as e:
-        with st.sidebar:
-            st.warning(f"⚠️ Reranker failed to load: {str(e)}")
+        return CrossEncoder(RERANK_MODEL_NAME)
+    except:
         return None
 
-def rerank_documents(query: str, documents: List, reranker) -> List:
-    """Rerank documents using cross-encoder"""
-    if not reranker or not documents:
-        return documents
-    
-    try:
-        # Prepare query-document pairs
-        pairs = [[query, doc.page_content] for doc in documents]
-        
-        # Get relevance scores
-        scores = reranker.predict(pairs)
-        
-        # Sort documents by relevance score (descending)
-        scored_docs = list(zip(documents, scores))
-        scored_docs.sort(key=lambda x: x[1], reverse=True)
-        
-        # Return top-k documents
-        return [doc for doc, score in scored_docs[:RERANK_TOP_K]]
-        
-    except Exception as e:
-        st.error(f"Reranking error: {str(e)}")
-        return documents[:RERANK_TOP_K]
-
 # ================================ RAG Functions ================================
-def get_relevant_context(query: str, vectorstore: Chroma, reranker=None, use_rag: bool = True) -> Tuple[str, List[str]]:
-    """Get relevant context from vector store with optional reranking"""
+def get_relevant_context(query: str, vectorstore: Chroma, use_rag: bool = True) -> Tuple[str, List[str]]:
+    """Get relevant context from vector store with reranking"""
     if not use_rag or st.session_state.ablation_mode in ["no_rag", "baseline"]:
         st.session_state.retrieval_history.append({
             "timestamp": datetime.now().isoformat(),
@@ -214,24 +179,29 @@ def get_relevant_context(query: str, vectorstore: Chroma, reranker=None, use_rag
         return "", []
     
     try:
-        # Retrieve more candidates for reranking
-        k = RERANK_CANDIDATES if ENABLE_RERANK else RERANK_TOP_K
+        # Get more candidates for reranking
+        k = RERANK_CANDIDATES if ENABLE_RERANK else 4
         relevant_docs = vectorstore.similarity_search(query, k=k)
         
         if not relevant_docs:
-            st.session_state.retrieval_history.append({
-                "timestamp": datetime.now().isoformat(),
-                "query": query[:100],
-                "docs_retrieved": 0,
-                "docs_used": 0
-            })
             return "", []
         
         # Rerank if enabled
-        if ENABLE_RERANK and reranker:
-            relevant_docs = rerank_documents(query, relevant_docs, reranker)
+        if ENABLE_RERANK:
+            reranker = load_reranker()
+            if reranker:
+                try:
+                    pairs = [[query, doc.page_content] for doc in relevant_docs]
+                    scores = reranker.predict(pairs)
+                    scored_docs = list(zip(relevant_docs, scores))
+                    scored_docs.sort(key=lambda x: x[1], reverse=True)
+                    relevant_docs = [doc for doc, score in scored_docs[:RERANK_TOP_K]]
+                except:
+                    relevant_docs = relevant_docs[:RERANK_TOP_K]
+            else:
+                relevant_docs = relevant_docs[:RERANK_TOP_K]
         else:
-            relevant_docs = relevant_docs[:RERANK_TOP_K]
+            relevant_docs = relevant_docs[:4]
         
         chunks = []
         titles = []
@@ -252,21 +222,13 @@ def get_relevant_context(query: str, vectorstore: Chroma, reranker=None, use_rag
             "query": query[:100],
             "docs_retrieved": k,
             "docs_used": len(chunks),
-            "sources": titles[:3],
-            "reranked": ENABLE_RERANK and reranker is not None
+            "sources": titles[:3]
         })
         
         return context, titles
         
     except Exception as e:
         st.error(f"RAG Error: {str(e)}")
-        st.session_state.retrieval_history.append({
-            "timestamp": datetime.now().isoformat(),
-            "query": query[:100],
-            "docs_retrieved": 0,
-            "docs_used": 0,
-            "error": str(e)
-        })
         return "", []
 
 # ================================ LLM Functions ================================
@@ -389,7 +351,7 @@ The user said: "{user_input}"
 Based on these CBT resources:
 {context}
 
-Provide a helpful, specific response using the CBT techniques and information provided. Be supportive and practical. Reference specific techniques from the resources."""
+Provide a helpful, specific response using the CBT techniques and information provided. Be supportive and practical."""
         else:
             prompt = f"""You are VentPal, a compassionate mental health support chatbot.
 
@@ -400,7 +362,7 @@ Provide supportive guidance using general mental health best practices. Be empat
     return call_llm(prompt)
 
 # ================================ Main Processing ================================
-def process_user_input(user_text: str, vectorstore: Optional[Chroma], reranker=None):
+def process_user_input(user_text: str, vectorstore: Optional[Chroma]):
     """Process user input and generate response"""
     
     # Classify input
@@ -412,7 +374,7 @@ def process_user_input(user_text: str, vectorstore: Optional[Chroma], reranker=N
                st.session_state.conversation_stage == "support" and 
                vectorstore is not None)
     
-    context, sources = get_relevant_context(user_text, vectorstore, reranker, use_rag) if vectorstore else ("", [])
+    context, sources = get_relevant_context(user_text, vectorstore, use_rag) if vectorstore else ("", [])
     
     # Generate response
     response = generate_response(user_text, context, sources, classification)
@@ -476,8 +438,6 @@ def render_sidebar():
         if st.session_state.retrieval_history:
             last_retrieval = st.session_state.retrieval_history[-1]
             st.sidebar.write(f"**Last RAG:** {last_retrieval.get('docs_used', 0)} docs")
-            if last_retrieval.get('reranked'):
-                st.sidebar.write("**Reranked:** ✓")
         
         if st.session_state.classifier_history:
             last_classification = st.session_state.classifier_history[-1]
@@ -496,9 +456,8 @@ def main():
     # Render sidebar
     render_sidebar()
     
-    # Initialize vector store and reranker
+    # Initialize vector store
     vectorstore = create_vector_store()
-    reranker = load_reranker() if ENABLE_RERANK else None
     
     # Main chat interface
     st.title("💨 VentPal - Mental Health Support Chatbot")
@@ -516,7 +475,7 @@ def main():
             st.write(user_input)
         
         # Process and respond
-        process_user_input(user_input, vectorstore, reranker)
+        process_user_input(user_input, vectorstore)
         
         # Add assistant message to history
         if st.session_state.memory.chat_memory.messages:
