@@ -754,6 +754,12 @@ def main():
 def process_user_input(user_text: str, vectorstore):
     """Process user input through the therapy flow with ENHANCED comprehensive guidance"""
     
+    # FIXED: Define all variables early to avoid UnboundLocalError
+    use_rag = st.session_state.ablation_mode not in ["no_rag", "baseline"]
+    context = ""  # Initialize context
+    sources = []  # Initialize sources
+    skill_used = None  # Initialize skill_used
+    
     with st.chat_message("user", avatar="👤"):
         st.markdown(user_text)
     
@@ -791,15 +797,11 @@ def process_user_input(user_text: str, vectorstore):
     if current_stage == "greeting":
         st.session_state.conversation_stage = "exploration"
         reply = generate_therapy_response(user_text, "exploration", emotion)
-        skill_used = None
-        sources = []
         
     elif current_stage == "exploration":
         st.session_state.conversation_stage = "consent"
         st.session_state.awaiting_consent = True
         reply = generate_therapy_response(user_text, "consent", emotion)
-        skill_used = None
-        sources = []
         
     elif current_stage == "consent" and st.session_state.awaiting_consent:
         if check_for_consent(user_text):
@@ -807,25 +809,18 @@ def process_user_input(user_text: str, vectorstore):
             st.session_state.awaiting_consent = False
             
             # Use comprehensive RAG (respects ablation mode)
-            use_rag = st.session_state.ablation_mode not in ["no_rag", "baseline"]
-            context, titles = get_comprehensive_context(user_text, vectorstore, use_rag)
+            context, sources = get_comprehensive_context(user_text, vectorstore, use_rag)
             reply = generate_therapy_response(user_text, "support", emotion, context)
-            
             skill_used = "Comprehensive CBT/DBT Guidance" if context else None
-            sources = titles if titles else []
         else:
             st.session_state.conversation_stage = "support"
             st.session_state.awaiting_consent = False
             reply = "That's completely fine. I'm still here to listen and support you. What would feel most helpful right now?"
-            skill_used = None
-            sources = []
     
     else:  # support stage - ENHANCED with comprehensive guidance
-        use_rag = st.session_state.ablation_mode not in ["no_rag", "baseline"]
-        context, titles = get_comprehensive_context(user_text, vectorstore, use_rag)
+        context, sources = get_comprehensive_context(user_text, vectorstore, use_rag)
         reply = generate_therapy_response(user_text, "support", emotion, context)
         skill_used = "Comprehensive CBT/DBT Guidance" if context else None
-        sources = titles if titles else []
     
     # Display response
     with st.chat_message("assistant", avatar="🤖"):
