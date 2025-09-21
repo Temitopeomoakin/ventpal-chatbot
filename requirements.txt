@@ -2,10 +2,11 @@
 streamlit>=1.32.0
 requests>=2.31.0
 
-# EXACT versions to match your working Colab
-numpy==1.26.4
-chromadb>=0.4.0,<0.5.0
-langchain>=0.1.0,<0.2.0
+# Vector DB - Updated to 0.5.x to match migrated database
+chromadb>=0.5.0
+
+# LangChain - compatible with ChromaDB 0.5.x
+langchain>=0.1.20
 langchain-community>=0.0.38
 
 # Embeddings
@@ -13,11 +14,17 @@ sentence-transformers>=2.6.1,<3
 transformers>=4.40.0,<5
 huggingface-hub>=0.22.0
 
+# Cross-encoder for reranking
+torch>=1.9.0
+
 # SQLite shim
 pysqlite3-binary>=0.5.4,<0.6 ; platform_system != "Windows"
 
 # Protobuf
-protobuf==3.20.3
+protobuf>=3.20.3
 
 # Utils
 orjson>=3.9.10
+
+# Pydantic 2.x+ (required for ChromaDB 0.5.x)
+pydantic>=2.0.0
