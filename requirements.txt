@@ -28,3 +28,5 @@ orjson>=3.9.10
 
 # Pydantic 2.x+ (required for ChromaDB 0.5.x)
 pydantic>=2.0.0
+
+deep-translator>=1.11.4

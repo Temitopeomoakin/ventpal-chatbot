@@ -1,4 +1,4 @@
-# ventpal.py — VentPal with Natural Therapy Flow + Enhanced Multi-RAG Guidance
+# ventpal.py — VentPal with Natural Therapy Flow + Enhanced Multi-RAG Guidance + Translation
 # --------------------------------------------------------------------------
 # Greeting → Emotion Check → Exploration → Consent → RAG with comprehensive technique guidance
 
@@ -31,6 +31,12 @@ try:
 except ImportError:
     CrossEncoder = None
 
+# Add translation import - ONLY ADDITION
+try:
+    from deep_translator import GoogleTranslator
+except ImportError:
+    GoogleTranslator = None
+
 # ================================ Configuration ================================
 st.set_page_config(
     page_title="VentPal", 
@@ -62,6 +68,8 @@ if "retrieval_history" not in st.session_state:
     st.session_state.retrieval_history = []
 if "ablation_mode" not in st.session_state:
     st.session_state.ablation_mode = "full_system"  # full_system, no_classifier, no_rag, baseline
+if "selected_language" not in st.session_state:  # ONLY ADDITION
+    st.session_state.selected_language = "en"
 
 # Load secrets - UPDATED to match your actual secrets
 HUGGINGFACE_API_KEY = st.secrets["HUGGINGFACE_API_KEY"]
@@ -98,6 +106,30 @@ SKILL_COOLDOWN_TURNS = int(st.secrets["SKILL_COOLDOWN_TURNS"])
 if HUGGINGFACE_API_KEY:
     os.environ["HUGGINGFACEHUB_API_TOKEN"] = HUGGINGFACE_API_KEY
     os.environ["HUGGINGFACE_HUB_TOKEN"] = HUGGINGFACE_API_KEY
+
+# Translation settings - ONLY ADDITION
+SUPPORTED_LANGUAGES = {
+    "en": "English",
+    "es": "Spanish (Español)",
+    "fr": "French (Français)",
+    "ar": "Arabic (العربية)",
+    "hi": "Hindi (हिंदी)",
+    "ur": "Urdu (اردو)",
+    "pt": "Portuguese (Português)",
+    "de": "German (Deutsch)",
+    "it": "Italian (Italiano)",
+    "zh": "Chinese (中文)",
+    "ja": "Japanese (日本語)",
+    "ko": "Korean (한국어)",
+    "ru": "Russian (Русский)",
+    "tr": "Turkish (Türkçe)",
+    "nl": "Dutch (Nederlands)",
+    "sv": "Swedish (Svenska)",
+    "da": "Danish (Dansk)",
+    "no": "Norwegian (Norsk)",
+    "fi": "Finnish (Suomi)",
+    "pl": "Polish (Polski)"
+}
 
 # ================================ UI Styling ================================
 st.markdown("""
@@ -155,6 +187,35 @@ def footer_notice():
 def chip(text: str, kind: str = "ok"):
     cls = {"ok": "ok", "warn": "warn", "err": "err"}.get(kind, "ok")
     st.markdown(f'<span class="status-chip {cls}">{text}</span>', unsafe_allow_html=True)
+
+# ================================ Translation Functions - ONLY ADDITION ================================
+def translate_text(text: str, target_lang: str) -> str:
+    """Translate text to target language"""
+    if target_lang == "en" or not text.strip() or GoogleTranslator is None:
+        return text
+    
+    try:
+        translator = GoogleTranslator(source='en', target=target_lang)
+        return translator.translate(text)
+    except Exception as e:
+        # If translation fails, return original text
+        return text
+
+def translate_sources(sources: List[str], target_lang: str) -> List[str]:
+    """Translate source names to target language"""
+    if target_lang == "en" or not sources or GoogleTranslator is None:
+        return sources
+    
+    translated_sources = []
+    for source in sources:
+        try:
+            translator = GoogleTranslator(source='en', target=target_lang)
+            translated = translator.translate(f"Source: {source}")
+            translated_sources.append(translated)
+        except:
+            translated_sources.append(source)  # Fallback to original
+    
+    return translated_sources
 
 # ================================ Test Scenarios for Thesis ================================
 TEST_SCENARIOS = {
@@ -595,6 +656,25 @@ def main():
     with st.sidebar:
         st.header("🔬 Thesis Controls")
         
+        # Language selector - ONLY ADDITION
+        st.subheader("🌍 Language")
+        selected_language_name = st.selectbox(
+            "Choose your language:",
+            options=list(SUPPORTED_LANGUAGES.values()),
+            index=0  # Default to English
+        )
+        
+        # Get language code from name
+        selected_language_code = "en"
+        for code, name in SUPPORTED_LANGUAGES.items():
+            if name == selected_language_name:
+                selected_language_code = code
+                break
+        
+        if selected_language_code != st.session_state.selected_language:
+            st.session_state.selected_language = selected_language_code
+            st.info(f"Language changed to: {selected_language_name}")
+        
         # Ablation study controls
         st.subheader("Ablation Study")
         ablation_options = {
@@ -643,11 +723,17 @@ def main():
             st.write("RAG")
             chip("active ✓" if rag_active else "disabled", "ok" if rag_active else "warn")
         
+        # Show translation status - ONLY ADDITION
+        st.write("Translation")
+        translation_active = st.session_state.selected_language != "en" and GoogleTranslator is not None
+        chip("active ✓" if translation_active else "disabled", "ok" if translation_active else "warn")
+        
         # Session metrics
         st.subheader("📊 Session Metrics")
         st.metric("Stage", st.session_state.conversation_stage.title())
         st.metric("Current Emotion", st.session_state.current_emotion.title())
         st.metric("Messages", len(st.session_state.messages))
+        st.metric("Language", selected_language_name.split(" (")[0])  # ONLY ADDITION
         st.metric("Ablation Mode", ablation_options[st.session_state.ablation_mode])
         
         if st.session_state.classifier_history:
@@ -679,7 +765,8 @@ def main():
                     "session_id": st.session_state.user_id,
                     "ablation_mode": st.session_state.ablation_mode,
                     "total_messages": len(st.session_state.messages),
-                    "conversation_stage": st.session_state.conversation_stage
+                    "conversation_stage": st.session_state.conversation_stage,
+                    "language": st.session_state.selected_language  # ONLY ADDITION
                 },
                 "classifier_history": st.session_state.classifier_history,
                 "retrieval_history": st.session_state.retrieval_history,
@@ -715,6 +802,10 @@ def main():
     # Initial greeting if no messages
     if len(st.session_state.messages) == 0:
         greeting = f"Hello {st.session_state.user_name}! I'm VentPal, and I'm here to support you today. How are you doing?"
+        # Translate greeting if needed - ONLY ADDITION
+        if st.session_state.selected_language != "en":
+            greeting = translate_text(greeting, st.session_state.selected_language)
+        
         st.session_state.messages.append({"role": "assistant", "content": greeting})
         st.session_state.conversation_stage = "greeting"
     
@@ -723,9 +814,18 @@ def main():
         with st.chat_message(m["role"], avatar=("🤖" if m["role"] == "assistant" else "👤")):
             st.markdown(m["content"])
             if m.get("skill_used"):
-                st.markdown(f"<div class='skill-badge'>💡 {m['skill_used']}</div>", unsafe_allow_html=True)
+                skill_text = m["skill_used"]
+                # Translate skill badge if needed - ONLY ADDITION
+                if st.session_state.selected_language != "en":
+                    skill_text = translate_text(skill_text, st.session_state.selected_language)
+                st.markdown(f"<div class='skill-badge'>💡 {skill_text}</div>", unsafe_allow_html=True)
             if m.get("sources"):
-                st.caption("Sources: " + ", ".join(m["sources"]))
+                # Translate sources if needed - ONLY ADDITION
+                if st.session_state.selected_language != "en":
+                    translated_sources = translate_sources(m["sources"], st.session_state.selected_language)
+                    st.caption(", ".join(translated_sources))
+                else:
+                    st.caption("Sources: " + ", ".join(m["sources"]))
     
     # Handle test mode
     if hasattr(st.session_state, 'test_mode') and st.session_state.test_mode:
@@ -766,6 +866,10 @@ def process_user_input(user_text: str, vectorstore):
     # Crisis check first
     if detect_crisis_regex(user_text):
         msg = crisis_block()
+        # Translate crisis message if needed - ONLY ADDITION
+        if st.session_state.selected_language != "en":
+            msg = translate_text(msg, st.session_state.selected_language)
+        
         with st.chat_message("assistant", avatar="🤖"):
             st.markdown(msg)
         
@@ -822,13 +926,26 @@ def process_user_input(user_text: str, vectorstore):
         reply = generate_therapy_response(user_text, "support", emotion, context)
         skill_used = "Comprehensive CBT/DBT Guidance" if context else None
     
+    # Translate reply if needed - ONLY ADDITION
+    if st.session_state.selected_language != "en":
+        reply = translate_text(reply, st.session_state.selected_language)
+    
     # Display response
     with st.chat_message("assistant", avatar="🤖"):
         st.markdown(reply)
         if skill_used:
-            st.markdown(f"<div class='skill-badge'>💡 {skill_used}</div>", unsafe_allow_html=True)
+            # Translate skill badge if needed - ONLY ADDITION
+            skill_text = skill_used
+            if st.session_state.selected_language != "en":
+                skill_text = translate_text(skill_text, st.session_state.selected_language)
+            st.markdown(f"<div class='skill-badge'>💡 {skill_text}</div>", unsafe_allow_html=True)
         if sources:
-            st.caption("Sources: " + ", ".join(set(sources)))
+            # Translate sources if needed - ONLY ADDITION
+            if st.session_state.selected_language != "en":
+                translated_sources = translate_sources(sources, st.session_state.selected_language)
+                st.caption(", ".join(set(translated_sources)))
+            else:
+                st.caption("Sources: " + ", ".join(set(sources)))
     
     # Save messages
     st.session_state.messages.extend([
@@ -840,7 +957,8 @@ def process_user_input(user_text: str, vectorstore):
              "ablation_mode": st.session_state.ablation_mode,
              "emotion": emotion,
              "stage": current_stage,
-             "comprehensive_rag": use_rag and bool(context)
+             "comprehensive_rag": use_rag and bool(context),
+             "language": st.session_state.selected_language  # ONLY ADDITION
          }}
     ])
     
