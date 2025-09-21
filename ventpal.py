@@ -1,6 +1,6 @@
-# ventpal.py — VentPal with Natural Therapy Flow + Fixed Response Integration
+# ventpal.py — VentPal with Natural Therapy Flow + Enhanced Multi-RAG Guidance
 # --------------------------------------------------------------------------
-# Greeting → Emotion Check → Exploration → Consent → RAG with proper technique integration
+# Greeting → Emotion Check → Exploration → Consent → RAG with comprehensive technique guidance
 
 import os, sys, time, json, re, random, hashlib
 from typing import List, Tuple, Dict, Optional
@@ -25,7 +25,7 @@ from langchain.vectorstores import Chroma
 
 from huggingface_hub import InferenceClient
 
-# Add reranking import - ONLY ADDITION
+# Add reranking import
 try:
     from sentence_transformers import CrossEncoder
 except ImportError:
@@ -288,7 +288,7 @@ def create_vector_store() -> Chroma:
         st.error(f"Failed to init vector store: {e}")
         st.stop()
 
-# Add reranker loading - ONLY ADDITION
+# Add reranker loading
 @st.cache_resource(show_spinner=False)
 def load_reranker():
     """Load reranker model"""
@@ -299,8 +299,8 @@ def load_reranker():
     except:
         return None
 
-def get_relevant_context(query: str, vectorstore: Chroma, use_rag: bool = True) -> Tuple[str, List[str]]:
-    """RAG with ablation study support - UPDATED with reranking"""
+def get_comprehensive_context(query: str, vectorstore: Chroma, use_rag: bool = True) -> Tuple[str, List[str]]:
+    """Enhanced RAG with multiple targeted queries for comprehensive guidance"""
     if not use_rag or st.session_state.ablation_mode in ["no_rag", "baseline"]:
         # Track attempted retrieval for ablation
         st.session_state.retrieval_history.append({
@@ -314,56 +314,87 @@ def get_relevant_context(query: str, vectorstore: Chroma, use_rag: bool = True) 
         return "", []
     
     try:
-        # Get more candidates for reranking
-        k = RERANK_CANDIDATES if ENABLE_RERANK else 3
-        relevant_docs = vectorstore.similarity_search(query, k=k)
+        # Multiple targeted searches for comprehensive guidance
+        searches = [
+            f"technique instructions steps {query}",      # Get step-by-step instructions
+            f"how to practice {query} exercise guide",    # Get practice guidance  
+            f"{query} example demonstration walkthrough", # Get examples
+            f"after {query} technique what next follow",  # Get follow-up steps
+            f"{query} breathing relaxation mindfulness",  # Get related techniques
+            query  # Original query
+        ]
         
-        if not relevant_docs:
+        all_docs = []
+        all_titles = set()
+        
+        for search_query in searches:
+            try:
+                docs = vectorstore.similarity_search(search_query, k=4)
+                for doc in docs:
+                    # Avoid duplicates based on content similarity
+                    content_start = doc.page_content[:100]
+                    if content_start not in [existing.page_content[:100] for existing in all_docs]:
+                        all_docs.append(doc)
+                        metadata = doc.metadata or {}
+                        title = metadata.get("title") or metadata.get("source") or "CBT/DBT Guide"
+                        all_titles.add(title)
+            except:
+                continue
+        
+        if not all_docs:
             return "", []
         
-        # Rerank if enabled - ONLY ADDITION
-        if ENABLE_RERANK:
+        # Rerank all collected documents for best relevance
+        if ENABLE_RERANK and len(all_docs) > 1:
             reranker = load_reranker()
             if reranker:
                 try:
-                    pairs = [[query, doc.page_content] for doc in relevant_docs]
+                    pairs = [[query, doc.page_content] for doc in all_docs]
                     scores = reranker.predict(pairs)
-                    scored_docs = list(zip(relevant_docs, scores))
+                    scored_docs = list(zip(all_docs, scores))
                     scored_docs.sort(key=lambda x: x[1], reverse=True)
-                    relevant_docs = [doc for doc, score in scored_docs[:RERANK_TOP_K]]
+                    relevant_docs = [doc for doc, score in scored_docs[:10]]  # Get more comprehensive content
                 except:
-                    relevant_docs = relevant_docs[:RERANK_TOP_K]
+                    relevant_docs = all_docs[:10]
             else:
-                relevant_docs = relevant_docs[:RERANK_TOP_K]
+                relevant_docs = all_docs[:10]
         else:
-            relevant_docs = relevant_docs[:3]
+            relevant_docs = all_docs[:10]
         
+        # Build comprehensive context with clear sections
         chunks = []
-        titles = []
         
-        for doc in relevant_docs:
+        for i, doc in enumerate(relevant_docs):
             content = doc.page_content.strip()
-            if content and len(content) > 100:
-                chunks.append(content[:1200] + ("…" if len(content) > 1200 else ""))
-                metadata = doc.metadata or {}
-                title = metadata.get("title") or metadata.get("source") or "CBT/DBT Guide"
-                titles.append(title)
+            if content and len(content) > 50:
+                # Longer chunks for more detailed instructions
+                chunk = content[:2000] + ("…" if len(content) > 2000 else "")
+                chunks.append(f"[Source {i+1}]: {chunk}")
         
-        # Track retrieval
+        # Join with clear separators for better context understanding
+        context = "\n\n---\n\n".join(chunks)
+        
+        # Track comprehensive retrieval
         st.session_state.retrieval_history.append({
             "timestamp": datetime.now().isoformat(),
             "ablation_mode": st.session_state.ablation_mode,
             "query": query[:100],
-            "docs_retrieved": k,
-            "docs_used": len(chunks)
+            "docs_retrieved": len(all_docs),
+            "docs_used": len(chunks),
+            "searches_performed": len(searches),
+            "comprehensive": True
         })
         
-        context = "\n\n".join(chunks)
-        return context, titles
+        return context, list(all_titles)
         
     except Exception as e:
-        st.sidebar.warning(f"Retrieval error: {e}")
+        st.sidebar.warning(f"Comprehensive retrieval error: {e}")
         return "", []
+
+# Keep original function for backward compatibility
+def get_relevant_context(query: str, vectorstore: Chroma, use_rag: bool = True) -> Tuple[str, List[str]]:
+    """RAG with ablation study support - UPDATED with reranking"""
+    return get_comprehensive_context(query, vectorstore, use_rag)
 
 # ================================ LLM ================================
 @st.cache_resource
@@ -375,7 +406,7 @@ def hf_client_fallback() -> InferenceClient:
     return InferenceClient(model=FALLBACK_MODEL, token=HUGGINGFACE_API_KEY, timeout=120)
 
 def generate_therapy_response(user_text: str, stage: str, emotion: str, context: str = "") -> str:
-    """Generate response based on therapy session stage with FIXED integration"""
+    """Generate response based on therapy session stage with ENHANCED comprehensive guidance"""
     
     # Get conversation memory
     memory = []
@@ -445,35 +476,44 @@ The user has explained their situation. Now offer to share some helpful CBT/DBT 
 but ask for their consent first. Say something like "I have some techniques that might help with [their issue]. 
 Would you like me to share them with you?" Keep it warm and collaborative."""
             
-        else:  # support stage - FIXED INTEGRATION
-            system_prompt = f"""You are VentPal, providing evidence-based mental health support.
-CRITICAL: You MUST use the provided CBT/DBT techniques in your response.
+        else:  # support stage - ENHANCED with comprehensive guidance
+            system_prompt = f"""You are VentPal, a skilled mental health therapist guiding someone through evidence-based techniques.
 
-Your structure:
-1. Acknowledge what the user just shared (1 sentence)
-2. Connect their insight to therapeutic concepts (1 sentence)
-3. Provide ONE specific, actionable technique from the context (2-3 sentences)
-4. Ask ONE focused question to help them apply it (1 sentence)
+CRITICAL INSTRUCTIONS:
+1. You MUST provide comprehensive, step-by-step guidance using the detailed content provided
+2. Walk them through the complete process - don't just mention technique names
+3. Give specific instructions they can follow immediately
+4. Include what to expect and what comes next
+5. Be like a therapist with the workbook open, guiding them page by page
+
+Your response structure:
+1. Acknowledge their current state with empathy (1 sentence)
+2. Introduce the specific technique you'll guide them through (1 sentence)  
+3. Provide detailed step-by-step instructions from the content (3-4 sentences)
+4. Give them something specific to try right now (1-2 sentences)
+5. Explain what to expect and what comes next (1-2 sentences)
 
 User emotion: {emotion}
-Keep responses under 120 words. Be warm but practical."""
+Keep responses comprehensive but under 200 words. Be warm, practical, and instructional."""
             
             user_prompt = f"""Conversation history:
 {memory_str}
 
 User's current message: {user_text}
 
-CBT/DBT Techniques to integrate:
-{context if context else "Focus on basic stress management and self-compassion techniques."}
+Comprehensive CBT/DBT Content from multiple sources:
+{context if context else "Focus on basic stress management, breathing techniques, and self-compassion practices with step-by-step guidance."}
 
-RESPONSE STRUCTURE:
-1. Acknowledge: "That's [insight about their response]"
-2. Connect: "This shows [therapeutic insight about self-compassion/helping others]"
-3. Technique: "[ONE specific technique from the context above]"
-4. Application: "How could you try this [specific situation/timeframe]?"
+COMPREHENSIVE GUIDANCE RESPONSE:
+Create a complete therapeutic response that:
+1. Acknowledges: "I can hear that you're [specific acknowledgment of their state]"
+2. Introduces: "Let me guide you through [specific technique] that can help with this"
+3. Instructs: "Here's exactly how to do this: [detailed step-by-step instructions from the content above]"
+4. Guides: "Try this right now: [specific immediate action]"
+5. Continues: "After you do this, [what happens next/follow-up from the content]"
 
-If they mentioned helping others with positivity/support, connect this to self-compassion.
-Use the actual techniques from the context - don't make up generic advice."""
+Use the detailed instructions, examples, and follow-up guidance from the comprehensive content above. 
+Don't just mention techniques - walk them through the complete process like a therapist would."""
     
     # Generate response
     try:
@@ -483,40 +523,36 @@ Use the actual techniques from the context - don't make up generic advice."""
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            max_tokens=150,
+            max_tokens=250,  # Increased for more comprehensive responses
             temperature=0.7
         )
         return completion.choices[0].message.content
     except:
-        # Enhanced fallback for support stage
+        # Enhanced fallback for support stage with comprehensive guidance
         if stage == "support" and context:
-            # Extract a technique from context if possible
+            # Extract detailed instructions from context
             context_lines = context.split('\n')
-            technique_line = ""
+            instructions = []
             for line in context_lines:
-                if any(word in line.lower() for word in ['breathe', 'technique', 'try', 'practice', 'step']):
-                    technique_line = line.strip()[:100]
-                    break
+                if any(word in line.lower() for word in ['step', 'first', 'then', 'next', 'breathe', 'notice', 'try', 'practice']):
+                    instructions.append(line.strip())
             
-            if "positivity" in user_text.lower() or "support" in user_text.lower():
-                return f"""That's such a compassionate way to support others - now let's apply that same kindness to yourself.
+            instruction_text = " ".join(instructions[:3]) if instructions else "Try the 'STOP' technique: Stop what you're doing, Take a breath, Observe your thoughts and feelings, and Proceed with intention."
+            
+            return f"""I can hear that you're working through some difficult feelings right now. Let me guide you through a technique that can help.
 
-{technique_line if technique_line else "Try the 'STOP' technique: Stop what you're doing, Take a breath, Observe your thoughts and feelings, and Proceed with intention."}
+{instruction_text}
 
-When you notice stress building up today, how could you give yourself the same emotional support you'd give a friend?"""
-            else:
-                return f"""I hear what you're sharing. Let me offer a technique that might help:
+Try this right now: Take three slow, deep breaths and notice what you're feeling in your body. Don't try to change anything, just observe with kindness.
 
-{technique_line if technique_line else "When feeling overwhelmed, try grounding yourself by naming 5 things you can see, 4 you can touch, 3 you can hear, 2 you can smell, and 1 you can taste."}
-
-How do you think this might work for your situation?"""
+After you do this, we can explore what you noticed and move to the next step. How does that feel for you?"""
         
         # Other fallbacks
         fallbacks = {
             "greeting": f"Hello {st.session_state.user_name}! I'm VentPal, and I'm here to support you today. How are you doing?",
             "exploration": "I hear that you're struggling right now. Can you tell me a bit more about what's been weighing on your mind?",
             "consent": "I understand what you're going through. I have some techniques that might help with this. Would you like me to share them with you?",
-            "support": "Thank you for sharing that insight. Let's work together to apply some helpful strategies."
+            "support": "Thank you for sharing that with me. Let me guide you through a helpful technique step by step."
         }
         return fallbacks.get(stage, "I'm here to support you. What would be most helpful right now?")
 
@@ -625,6 +661,17 @@ def main():
             else:
                 st.caption("Classification disabled (ablation)")
         
+        # Enhanced RAG metrics
+        if st.session_state.retrieval_history:
+            st.subheader("🔍 Last RAG Retrieval")
+            last_retrieval = st.session_state.retrieval_history[-1]
+            st.caption(f"Documents: {last_retrieval.get('docs_used', 0)}")
+            if last_retrieval.get('comprehensive'):
+                st.caption("Mode: Comprehensive Multi-Search")
+                st.caption(f"Searches: {last_retrieval.get('searches_performed', 0)}")
+            else:
+                st.caption("Mode: Standard Search")
+        
         # Export thesis data
         if st.button("📥 Export Thesis Data"):
             thesis_data = {
@@ -705,7 +752,7 @@ def main():
     process_user_input(user_text, vectorstore)
 
 def process_user_input(user_text: str, vectorstore):
-    """Process user input through the therapy flow with FIXED integration"""
+    """Process user input through the therapy flow with ENHANCED comprehensive guidance"""
     
     with st.chat_message("user", avatar="👤"):
         st.markdown(user_text)
@@ -740,7 +787,7 @@ def process_user_input(user_text: str, vectorstore):
     # Determine conversation flow
     current_stage = st.session_state.conversation_stage
     
-    # Stage transitions with FIXED support stage
+    # Stage transitions with ENHANCED support stage
     if current_stage == "greeting":
         st.session_state.conversation_stage = "exploration"
         reply = generate_therapy_response(user_text, "exploration", emotion)
@@ -759,12 +806,12 @@ def process_user_input(user_text: str, vectorstore):
             st.session_state.conversation_stage = "support"
             st.session_state.awaiting_consent = False
             
-            # Use RAG (respects ablation mode)
+            # Use comprehensive RAG (respects ablation mode)
             use_rag = st.session_state.ablation_mode not in ["no_rag", "baseline"]
-            context, titles = get_relevant_context(user_text, vectorstore, use_rag)
+            context, titles = get_comprehensive_context(user_text, vectorstore, use_rag)
             reply = generate_therapy_response(user_text, "support", emotion, context)
             
-            skill_used = "CBT/DBT/Journaling" if context else None
+            skill_used = "Comprehensive CBT/DBT Guidance" if context else None
             sources = titles if titles else []
         else:
             st.session_state.conversation_stage = "support"
@@ -773,11 +820,11 @@ def process_user_input(user_text: str, vectorstore):
             skill_used = None
             sources = []
     
-    else:  # support stage - FIXED to always use RAG when available
+    else:  # support stage - ENHANCED with comprehensive guidance
         use_rag = st.session_state.ablation_mode not in ["no_rag", "baseline"]
-        context, titles = get_relevant_context(user_text, vectorstore, use_rag)
+        context, titles = get_comprehensive_context(user_text, vectorstore, use_rag)
         reply = generate_therapy_response(user_text, "support", emotion, context)
-        skill_used = "CBT/DBT/Journaling" if context else None
+        skill_used = "Comprehensive CBT/DBT Guidance" if context else None
         sources = titles if titles else []
     
     # Display response
@@ -797,7 +844,8 @@ def process_user_input(user_text: str, vectorstore):
          "metadata": {
              "ablation_mode": st.session_state.ablation_mode,
              "emotion": emotion,
-             "stage": current_stage
+             "stage": current_stage,
+             "comprehensive_rag": use_rag and bool(context)
          }}
     ])
     
