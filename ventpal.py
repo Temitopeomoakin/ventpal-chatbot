@@ -1,4 +1,4 @@
-# ventpal.py — VentPal with Natural Therapy Flow + Improved RAG with Reranking
+# ventpal.py — VentPal with Natural Therapy Flow + Fixed Response Integration
 # --------------------------------------------------------------------------
 # Greeting → Emotion Check → Exploration → Consent → RAG with proper technique integration
 
@@ -62,17 +62,11 @@ HUGGINGFACE_API_KEY = st.secrets.get("HUGGINGFACE_API_KEY", "")
 MODEL_NAME = st.secrets.get("MODEL_NAME", "meta-llama/Llama-4-Scout-17B-16E-Instruct")
 FALLBACK_MODEL = st.secrets.get("FALLBACK_MODEL", "HuggingFaceH4/zephyr-7b-beta")
 EMBEDDING_MODEL = st.secrets.get("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
-VECTOR_DB_PATH = st.secrets.get("VECTOR_DB_PATH", "vector_db_rebuild")
-COLLECTION_NAME = st.secrets.get("COLLECTION_NAME", "cbt_docs_fresh_2024")
+VECTOR_DB_PATH = st.secrets.get("VECTOR_DB_PATH", "vector_db_new")
+COLLECTION_NAME = st.secrets.get("COLLECTION_NAME", "cbt_docs_2024")
 CLASSIFIER_URL = st.secrets.get("CLASSIFIER_URL", "")
 CLASSIFIER_AUTH = st.secrets.get("CLASSIFIER_AUTH", "")
 MAX_REQUESTS_PER_HOUR = int(st.secrets.get("MAX_REQUESTS_PER_HOUR", 60))
-
-# Reranking settings
-ENABLE_RERANK = st.secrets.get("ENABLE_RERANK", "true").lower() == "true"
-RERANK_MODEL_NAME = st.secrets.get("RERANK_MODEL_NAME", "cross-encoder/ms-marco-MiniLM-L-6-v2")
-RERANK_CANDIDATES = int(st.secrets.get("RERANK_CANDIDATES", 12))
-RERANK_TOP_K = int(st.secrets.get("RERANK_TOP_K", 4))
 
 # Set HF token
 if HUGGINGFACE_API_KEY:
@@ -237,7 +231,7 @@ def _top(head: Optional[Dict], default_label="unknown", default_conf: float = 0.
     top = (head or {}).get("top") or {}
     return str(top.get("label", default_label)).lower(), float(top.get("conf", default_conf))
 
-# ================================ RAG with Reranking ================================
+# ================================ RAG with Ablation ================================
 @st.cache_resource(show_spinner=False)
 def create_vector_store() -> Chroma:
     if not os.path.exists(VECTOR_DB_PATH):
@@ -268,21 +262,10 @@ def create_vector_store() -> Chroma:
         st.error(f"Failed to init vector store: {e}")
         st.stop()
 
-@st.cache_resource
-def load_reranker():
-    """Load reranker model once and cache it"""
-    if ENABLE_RERANK:
-        try:
-            from sentence_transformers import CrossEncoder
-            return CrossEncoder(RERANK_MODEL_NAME)
-        except Exception as e:
-            st.sidebar.warning(f"⚠️ Failed to load reranker: {str(e)[:50]}")
-            return None
-    return None
-
 def get_relevant_context(query: str, vectorstore: Chroma, use_rag: bool = True) -> Tuple[str, List[str]]:
-    """RAG with reranking for better relevance"""
+    """RAG with ablation study support"""
     if not use_rag or st.session_state.ablation_mode in ["no_rag", "baseline"]:
+        # Track attempted retrieval for ablation
         st.session_state.retrieval_history.append({
             "timestamp": datetime.now().isoformat(),
             "ablation_mode": st.session_state.ablation_mode,
@@ -294,75 +277,36 @@ def get_relevant_context(query: str, vectorstore: Chroma, use_rag: bool = True) 
         return "", []
     
     try:
-        # Step 1: Retrieve more candidates for reranking
-        candidates_k = RERANK_CANDIDATES if ENABLE_RERANK else 4
-        relevant_docs = vectorstore.similarity_search(query, k=candidates_k)
+        relevant_docs = vectorstore.similarity_search(query, k=3)
         
         if not relevant_docs:
             return "", []
         
-        # Step 2: Rerank if enabled
-        if ENABLE_RERANK and len(relevant_docs) > 1:
-            reranker = load_reranker()
-            if reranker:
-                try:
-                    # Prepare query-document pairs for reranking
-                    query_doc_pairs = []
-                    for doc in relevant_docs:
-                        # Use first 512 chars for reranking (model limit)
-                        doc_text = doc.page_content[:512]
-                        query_doc_pairs.append([query, doc_text])
-                    
-                    # Get reranking scores
-                    rerank_scores = reranker.predict(query_doc_pairs)
-                    
-                    # Sort documents by reranking score (higher = more relevant)
-                    doc_score_pairs = list(zip(relevant_docs, rerank_scores))
-                    doc_score_pairs.sort(key=lambda x: x[1], reverse=True)
-                    
-                    # Take top K after reranking
-                    relevant_docs = [doc for doc, score in doc_score_pairs[:RERANK_TOP_K]]
-                    
-                    st.sidebar.info(f"📊 Reranked {len(query_doc_pairs)} → {len(relevant_docs)} docs")
-                    
-                except Exception as e:
-                    st.sidebar.warning(f"⚠️ Reranking failed: {str(e)[:50]}, using original order")
-        
-        # Step 3: Process selected documents
         chunks = []
         titles = []
         
         for doc in relevant_docs:
             content = doc.page_content.strip()
-            if content and len(content) > 50:  # Lower threshold
-                # Truncate long content
+            if content and len(content) > 100:
                 chunks.append(content[:1200] + ("…" if len(content) > 1200 else ""))
-                
-                # Extract source info
                 metadata = doc.metadata or {}
-                title = metadata.get("source") or metadata.get("chunk_id") or "CBT Guide"
+                title = metadata.get("title") or metadata.get("source") or "CBT/DBT Guide"
                 titles.append(title)
         
-        # Step 4: Track retrieval
+        # Track retrieval
         st.session_state.retrieval_history.append({
             "timestamp": datetime.now().isoformat(),
             "ablation_mode": st.session_state.ablation_mode,
             "query": query[:100],
             "docs_retrieved": len(relevant_docs),
-            "docs_used": len(chunks),
-            "reranked": ENABLE_RERANK
+            "docs_used": len(chunks)
         })
         
         context = "\n\n".join(chunks)
-        
-        if chunks:
-            rerank_status = "reranked" if ENABLE_RERANK else "similarity"
-            st.sidebar.info(f"📚 Retrieved {len(chunks)} {rerank_status} chunks")
-        
         return context, titles
         
     except Exception as e:
-        st.sidebar.warning(f"🔍 Retrieval error: {str(e)[:50]}")
+        st.sidebar.warning(f"Retrieval error: {e}")
         return "", []
 
 # ================================ LLM ================================
@@ -445,13 +389,13 @@ The user has explained their situation. Now offer to share some helpful CBT/DBT 
 but ask for their consent first. Say something like "I have some techniques that might help with [their issue]. 
 Would you like me to share them with you?" Keep it warm and collaborative."""
             
-        else:  # support stage - IMPROVED INTEGRATION
+        else:  # support stage - FIXED INTEGRATION
             system_prompt = f"""You are VentPal, providing evidence-based mental health support.
 CRITICAL: You MUST use the provided CBT/DBT techniques in your response.
 
 Your structure:
 1. Acknowledge what the user just shared (1 sentence)
-2. Connect their situation to therapeutic concepts (1 sentence)
+2. Connect their insight to therapeutic concepts (1 sentence)
 3. Provide ONE specific, actionable technique from the context (2-3 sentences)
 4. Ask ONE focused question to help them apply it (1 sentence)
 
@@ -463,17 +407,17 @@ Keep responses under 120 words. Be warm but practical."""
 
 User's current message: {user_text}
 
-Evidence-based CBT/DBT techniques to integrate:
-{context if context else "Focus on basic grounding and self-compassion techniques."}
+CBT/DBT Techniques to integrate:
+{context if context else "Focus on basic stress management and self-compassion techniques."}
 
 RESPONSE STRUCTURE:
-1. Acknowledge: "I can hear that [acknowledge their feeling/situation]"
-2. Connect: "This relates to [therapeutic concept from context]"
-3. Technique: "[ONE specific technique from the context above with clear steps]"
-4. Application: "How might you try this [when/where/how]?"
+1. Acknowledge: "That's [insight about their response]"
+2. Connect: "This shows [therapeutic insight about self-compassion/helping others]"
+3. Technique: "[ONE specific technique from the context above]"
+4. Application: "How could you try this [specific situation/timeframe]?"
 
-Use the actual techniques and language from the context provided - don't create generic advice.
-Make it practical and actionable."""
+If they mentioned helping others with positivity/support, connect this to self-compassion.
+Use the actual techniques from the context - don't make up generic advice."""
     
     # Generate response
     try:
@@ -494,25 +438,29 @@ Make it practical and actionable."""
             context_lines = context.split('\n')
             technique_line = ""
             for line in context_lines:
-                if any(word in line.lower() for word in ['breathe', 'technique', 'try', 'practice', 'step', 'exercise']):
-                    technique_line = line.strip()[:150]
+                if any(word in line.lower() for word in ['breathe', 'technique', 'try', 'practice', 'step']):
+                    technique_line = line.strip()[:100]
                     break
             
-            if technique_line:
-                return f"""I can hear that you're struggling right now. {technique_line}
+            if "positivity" in user_text.lower() or "support" in user_text.lower():
+                return f"""That's such a compassionate way to support others - now let's apply that same kindness to yourself.
 
-How might you try this technique when you're feeling overwhelmed today?"""
+{technique_line if technique_line else "Try the 'STOP' technique: Stop what you're doing, Take a breath, Observe your thoughts and feelings, and Proceed with intention."}
+
+When you notice stress building up today, how could you give yourself the same emotional support you'd give a friend?"""
             else:
-                return f"""I can hear that you're struggling. Here's a grounding technique: Take three slow, deep breaths. With each breath, notice one thing you can see, one thing you can hear, and one thing you can feel.
+                return f"""I hear what you're sharing. Let me offer a technique that might help:
 
-How might you use this breathing technique when stress feels overwhelming?"""
+{technique_line if technique_line else "When feeling overwhelmed, try grounding yourself by naming 5 things you can see, 4 you can touch, 3 you can hear, 2 you can smell, and 1 you can taste."}
+
+How do you think this might work for your situation?"""
         
         # Other fallbacks
         fallbacks = {
-            "greeting": f"Hello {st.session_state.get('user_name', 'there')}! I'm VentPal, and I'm here to support you today. How are you doing?",
-            "exploration": "I can hear that you're struggling right now. Can you tell me a bit more about what's been weighing on your mind?",
-            "consent": "I understand what you're going through sounds challenging. I have some evidence-based techniques that might help. Would you like me to share them with you?",
-            "support": "Thank you for sharing that with me. Let's work together on some strategies that might help you feel more supported."
+            "greeting": f"Hello {st.session_state.user_name}! I'm VentPal, and I'm here to support you today. How are you doing?",
+            "exploration": "I hear that you're struggling right now. Can you tell me a bit more about what's been weighing on your mind?",
+            "consent": "I understand what you're going through. I have some techniques that might help with this. Would you like me to share them with you?",
+            "support": "Thank you for sharing that insight. Let's work together to apply some helpful strategies."
         }
         return fallbacks.get(stage, "I'm here to support you. What would be most helpful right now?")
 
@@ -603,10 +551,6 @@ def main():
             st.write("RAG")
             chip("active ✓" if rag_active else "disabled", "ok" if rag_active else "warn")
         
-        # RAG status
-        if ENABLE_RERANK and rag_active:
-            st.caption(f"🔄 Reranking: {RERANK_CANDIDATES}→{RERANK_TOP_K} docs")
-        
         # Session metrics
         st.subheader("📊 Session Metrics")
         st.metric("Stage", st.session_state.conversation_stage.title())
@@ -614,7 +558,6 @@ def main():
         st.metric("Messages", len(st.session_state.messages))
         st.metric("Ablation Mode", ablation_options[st.session_state.ablation_mode])
         
-        # Classification history
         if st.session_state.classifier_history:
             st.subheader("🔭 Last Classification")
             last = st.session_state.classifier_history[-1]
@@ -626,17 +569,6 @@ def main():
             else:
                 st.caption("Classification disabled (ablation)")
         
-        # Retrieval history
-        if st.session_state.retrieval_history:
-            st.subheader("📚 Last Retrieval")
-            last_retrieval = st.session_state.retrieval_history[-1]
-            if not last_retrieval.get("_ablation"):
-                st.caption(f"Retrieved: {last_retrieval.get('docs_used', 0)} chunks")
-                if last_retrieval.get("reranked"):
-                    st.caption(f"Reranked: ✓")
-            else:
-                st.caption("RAG disabled (ablation)")
-        
         # Export thesis data
         if st.button("📥 Export Thesis Data"):
             thesis_data = {
@@ -644,8 +576,7 @@ def main():
                     "session_id": st.session_state.user_id,
                     "ablation_mode": st.session_state.ablation_mode,
                     "total_messages": len(st.session_state.messages),
-                    "conversation_stage": st.session_state.conversation_stage,
-                    "reranking_enabled": ENABLE_RERANK
+                    "conversation_stage": st.session_state.conversation_stage
                 },
                 "classifier_history": st.session_state.classifier_history,
                 "retrieval_history": st.session_state.retrieval_history,
@@ -718,7 +649,7 @@ def main():
     process_user_input(user_text, vectorstore)
 
 def process_user_input(user_text: str, vectorstore):
-    """Process user input through the therapy flow with IMPROVED integration"""
+    """Process user input through the therapy flow with FIXED integration"""
     
     with st.chat_message("user", avatar="👤"):
         st.markdown(user_text)
@@ -753,7 +684,7 @@ def process_user_input(user_text: str, vectorstore):
     # Determine conversation flow
     current_stage = st.session_state.conversation_stage
     
-    # Stage transitions with IMPROVED support stage
+    # Stage transitions with FIXED support stage
     if current_stage == "greeting":
         st.session_state.conversation_stage = "exploration"
         reply = generate_therapy_response(user_text, "exploration", emotion)
@@ -772,7 +703,7 @@ def process_user_input(user_text: str, vectorstore):
             st.session_state.conversation_stage = "support"
             st.session_state.awaiting_consent = False
             
-            # Use RAG with reranking (respects ablation mode)
+            # Use RAG (respects ablation mode)
             use_rag = st.session_state.ablation_mode not in ["no_rag", "baseline"]
             context, titles = get_relevant_context(user_text, vectorstore, use_rag)
             reply = generate_therapy_response(user_text, "support", emotion, context)
@@ -786,7 +717,7 @@ def process_user_input(user_text: str, vectorstore):
             skill_used = None
             sources = []
     
-    else:  # support stage - IMPROVED to always use RAG when available
+    else:  # support stage - FIXED to always use RAG when available
         use_rag = st.session_state.ablation_mode not in ["no_rag", "baseline"]
         context, titles = get_relevant_context(user_text, vectorstore, use_rag)
         reply = generate_therapy_response(user_text, "support", emotion, context)
@@ -810,8 +741,7 @@ def process_user_input(user_text: str, vectorstore):
          "metadata": {
              "ablation_mode": st.session_state.ablation_mode,
              "emotion": emotion,
-             "stage": current_stage,
-             "reranked": ENABLE_RERANK and use_rag
+             "stage": current_stage
          }}
     ])
     
