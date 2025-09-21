@@ -1,0 +1,6 @@
+[source_pdf: worry_final.txt] [therapy_type: CBT] [subtype: Worry Management (Alternate)] [audience: General Adult] [language: en]
+worry_final
+Step 3: Consider advantages and disadvantages
+Rating
+Possible solutions Advantages Disadvantages e.g. 1 = best solution, 10 =
+worst solution

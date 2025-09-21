@@ -1,0 +1,18 @@
+[source_pdf: Resting_Well_.txt] [therapy_type: CBT] [subtype: Sleep Psychoeducation (“Resting Well”)] [audience: General Adult] [language: en]
+Resting_Well_
+Resting Well: Steps to a Good Night’s Sleep
+HOW DO I GO ABOUT USING SLEEP RESTRICTION?
+Sleep restriction involves a number of calculations and can therefore appear quite difficult to do. Hopefully following these instructions will make it feel more straightforward. However, if you’re struggling, consider talking to the person supporting you (if relevant), friends or family members.
+LET’S GET STARTED!
+Stage 1 –Sleep Diary
+If you’ve already filled in a recent Sleep Diary, you can use this. If not, spend a week or two completing a Sleep Diary. As part of your sleep diary you calculated your Nightly Sleep Time (in minutes). Remember, if you struggled anyone supporting you may be able to help.
+Stage 2 – Calculate your Average Sleep Time
+Use your Nightly Sleep Time to calculate your Average Sleep Time for the week.
+Do this by adding up each Nightly Sleep Time (in minutes) and divide this by the number of nights you kept the diary for.
+Yusuf’s example – Average Sleep Time
+If we add up Yusuf’s nightly sleep time from each night over the week he kept his sleep diary, get 2340 minutes. Divide this by 7 (as he kept the diary for 7 nights) and there’s an average sleep time of 334 minutes (or 5 hours 34 minutes).
+Day 1 Day 2 Day 3 Day 4 Day 5 Day 6 Day 7
+Total Total ÷ 7
+Thurs Fri Sat Sun Mon Tues Wed
+300m 330m 390m 375m 300m 315m 330m 340m 334m
+27

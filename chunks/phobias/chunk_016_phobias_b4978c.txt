@@ -1,0 +1,4 @@
+[source_pdf: phobias.txt] [therapy_type: CBT] [subtype: Phobia Self-Help] [audience: General Adult] [language: en]
+phobias
+My exposure diary
+Fill in this exposure diary before and after you have placed yourself in an anxiety provoking situation. This can help you track your progress and notice improvements over time.

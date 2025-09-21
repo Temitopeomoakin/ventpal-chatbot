@@ -1,0 +1,3 @@
+[source_pdf: PsychologicalDistressWorkbook.txt] [therapy_type: DBT] [subtype: Distress Tolerance Skills (DBT-informed)] [audience: General Adult] [language: en]
+PsychologicalDistressWorkbook
+ Is this treating myself harder than I would if a friend was troubled by the same thoughts and had gone through what I have gone through? 19

@@ -1,0 +1,5 @@
+[source_pdf: PsychologicalDistressWorkbook.txt] [therapy_type: DBT] [subtype: Distress Tolerance Skills (DBT-informed)] [audience: General Adult] [language: en]
+PsychologicalDistressWorkbook
+Sometimes when we feel distressed, our thoughts can be driven by opinions which make our emotions feel stronger, which then make our opinions feel even stronger and so on.
+It can be helpful to realise that many thoughts are opinion rather than fact, making them less distressing and help us to make more calm decisions about the best action to take.
+36

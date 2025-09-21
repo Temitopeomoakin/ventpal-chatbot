@@ -1,0 +1,3 @@
+[source_pdf: ocd-workbook_final.txt] [therapy_type: CBT] [subtype: OCD Self-Help Workbook] [audience: General Adult] [language: en]
+ocd-workbook_final
+It is important to make sure you do not replace compulsions when resisting the urge to carry out the current compulsion. 12

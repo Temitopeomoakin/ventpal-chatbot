@@ -1,0 +1,20 @@
+[source_pdf: panic.txt] [therapy_type: CBT] [subtype: Panic Self-Help Leaflet] [audience: General Adult] [language: en]
+panic
+Graded hierarchy example
+See below an example of a graded hierarchy for anxiety when in crowded places.
+Situations Anxiety (0-100)
+Going on a long train journey in rush hour 100
+Going on a long train journey in the middle of the day 95
+Going to a crowded train station 90
+Going to a large supermarket at the busiest time of the day
+80 and do my shopping
+Going to a small supermarket at the busiest time of day to do
+75 my shopping
+Going to a large supermarket at a quiet time of day to do my
+65 shopping
+Going to a small supermarket at a quiet time of the day to do
+60 my shopping
+Going to a large café in lunch hour and having lunch 55
+Going to a small café in lunch hour and sitting and having
+50 lunch
+23

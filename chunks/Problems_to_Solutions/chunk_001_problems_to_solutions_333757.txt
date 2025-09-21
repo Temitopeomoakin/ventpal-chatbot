@@ -1,0 +1,5 @@
+[source_pdf: Problems_to_Solutions.txt] [therapy_type: CBT] [subtype: Problem Solving CBT] [audience: General Adult] [language: en]
+Problems_to_Solutions
+FROM PROBLEMS TO SOLUTIONS
+A Cognitive Behavioural Therapy evidence based approach to help you overcome your low mood or depression.
+1

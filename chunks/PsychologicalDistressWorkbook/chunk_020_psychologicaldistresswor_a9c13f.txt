@@ -1,0 +1,4 @@
+[source_pdf: PsychologicalDistressWorkbook.txt] [therapy_type: DBT] [subtype: Distress Tolerance Skills (DBT-informed)] [audience: General Adult] [language: en]
+PsychologicalDistressWorkbook
+Now that you have tried some mindfulness, try to pay attention to your emotions. This can be really difficult and sometimes a tool like the emotions wheel below can help. Being able to identify how you feel is an important skill.
+23

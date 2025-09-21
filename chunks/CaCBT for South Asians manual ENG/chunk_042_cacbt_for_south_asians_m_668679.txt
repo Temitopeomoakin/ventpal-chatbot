@@ -1,0 +1,16 @@
+[source_pdf: CaCBT for South Asians manual ENG.txt] [therapy_type: CaCBT] [subtype: South Asian Adapted CBT] [audience: South Asian diaspora] [language: en]
+CaCBT for South Asians manual ENG
+2.1.2 Bio-Psycho-Social-Spiritual Case Formulation
+Case formulation means that therapists build the client’s information provided at assessment into a comprehensive model that explains the psychological factors involved in developing and maintaining the client’s problem. This ‘formulation’ is then used to guide and monitor psychological interventions. Thus, case formulation aims to describe why a person has developed a particular problem at this stage and the maintaining and protective factors. There are many different types of formulations in CBT. The formulation also occurs at several levels: symptom, disorder, or problem,
+and case. See Figure 3.
+Figure 3. Bio-Psycho-Social-Spiritual Model
+• Family History • Born worrier
+• Past Episode • Perfectionist
+Biological Psychological
+Social Spiritual
+• Isolation • Guilty about not worshiping
+• Lost touch with family • Mother isn’t praying for her
+The formulation can link somatic complaints with thoughts, emotions, and behaviours. It can also include relevant spiritual and religious factors. The therapist should not expect the client to change their mind regarding the causes of their symptoms in the first meeting (and the therapist should be ready to talk about this a few times). A careful discussion should be built on neutral ground where the therapist initially does not strongly agree or refute the client’s illness ideas. This is a beneficial strategy, for example, when dealing with clients who are convinced that their somatic symptoms are due to a physical condition or a religious or spiritual cause.
+Various cognitive behavioural therapy writers have put out several case conceptualization models.
+The Four Ps model (Predisposing, Precipitating, Perpetuating and Protective factors) [56] is probably the most straightforward case conceptualization model. We usually use this in the first session.
+Part 2 Therapy-Related Issues I | 37

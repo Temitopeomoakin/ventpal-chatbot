@@ -1,0 +1,11 @@
+[source_pdf: IAPT-BAME-PPG-2019.txt] [therapy_type: Practice] [subtype: BAME Service User Positive Practice Guide] [audience: BAME communities] [language: en]
+IAPT-BAME-PPG-2019
+Figure 1: The Kolb cycle
+Try a technique or model
+Observe what
+Plan what happened when to do next it was used in therapy
+Reflect on the implications of this
+This model can be used when applying disorder-specific approaches in IAPT among BAME service users. The therapist can try a particular approach and observe what happens when this model is used. If this appears to be helpful, then they can reflect, with the service user and later with their supervisor, on what to do next to build on this success and plan accordingly. If it is not successful, they can reflect on this with the service user and their supervisor and plan what alternative approach might be helpful. Using routine outcome measures across cultures
+One important cornerstone of the IAPT programme is the use of sessional routine outcome measures
+(ROMS). The use of these measures has been essential in demonstrating the effectiveness of services and supporting service improvement. Services are obliged to report on the outcomes of service users as part of their contracts. ROMS can also be an important part of reflecting on and measuring change as part of therapy, and their effective use can enhance engagement and outcomes for service users. Not all ROMS used in IAPT services have been tested for reliability and validity for all of the BAME communities who use services. This means that staff should be cautious when using ROMS across cultures. They may not be as accurate a measure of distress and change for some BAME communities as they are for white majority service users. There is, however, a substantial body of research looking at the reliability and validity of the main
+IAPT measures in many communities. For example, the PHQ-9 has been found to have good reliability and validity in East Africa (Gelaya et al.

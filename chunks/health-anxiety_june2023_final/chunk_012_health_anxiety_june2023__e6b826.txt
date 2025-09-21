@@ -1,0 +1,16 @@
+[source_pdf: health-anxiety_june2023_final.txt] [therapy_type: CBT] [subtype: Health Anxiety Self-Help] [audience: General Adult] [language: en]
+health-anxiety_june2023_final
+Graded hierarchy example
+See below an example of a graded hierarchy for someone struggling with health anxiety.
+Situations Anxiety (0-100)
+Watch a charity programme focused on illness
+100
+(e.g. comic relief)
+Speak to someone about their experience of a serious illness 95
+Watch a programme where someone is seriously ill 90
+Listen to a song about someone who had a serious illness 75
+Sit in a GP surgery or hospice where people could be
+60 seriously ill
+Listen to a person talk about their illness on the radio 45
+Watch an illness charity advert (e.g. Cancer research) 35
+14

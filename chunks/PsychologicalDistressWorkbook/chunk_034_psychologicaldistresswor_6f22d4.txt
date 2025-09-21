@@ -1,0 +1,4 @@
+[source_pdf: PsychologicalDistressWorkbook.txt] [therapy_type: DBT] [subtype: Distress Tolerance Skills (DBT-informed)] [audience: General Adult] [language: en]
+PsychologicalDistressWorkbook
+Here are the facts and the opinions from the scenario on the previous page. Do they match up with what you had written down?
+38

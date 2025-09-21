@@ -1,0 +1,5 @@
+[source_pdf: panic.txt] [therapy_type: CBT] [subtype: Panic Self-Help Leaflet] [audience: General Adult] [language: en]
+panic
+In this case,
+hyperventilation is a symptom of panic not of the heart attack
+Adapted from Andrews G and Jenkins, R, 1998, Managing Mental Disorders, (UK Edition) Sydney World Health Organisation Collaboration Centre for Mental Health and Substance Abuse.

@@ -1,0 +1,4 @@
+[source_pdf: peer-support-toolkit-final.txt] [therapy_type: Peer Support] [subtype: Community Peer-Support Toolkit] [audience: General Adult] [language: en]
+peer-support-toolkit-final
+A peer support project can have an educational focus as its primary aim or it can include occasional educational sessions within a broader framework of peer support. You could develop a structured course with a designated number of sessions focused on particular mental health issues or particular skills related to managing social and emotional distress (for example, a course on managing anxiety). Alternatively, you could include one-off educational sessions on mental health in your peer support. Peer support with an educational focus can also address other issues that have an impact on the wellbeing of peers, such as physical health or benefits advice. 47
+Developing peer support in the community: a toolkit

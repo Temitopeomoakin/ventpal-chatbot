@@ -1,0 +1,6 @@
+[source_pdf: Facing_your_Fears_.txt] [therapy_type: CBT] [subtype: Exposure (Facing Your Fears)] [audience: General Adult] [language: en]
+Facing_your_Fears_
+6 erusopxE
+Fear Rating
+0 25 50 75 100
+No Fear Mild Moderate Severe Very Severe

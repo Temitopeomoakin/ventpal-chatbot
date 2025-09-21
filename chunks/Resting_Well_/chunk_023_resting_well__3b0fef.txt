@@ -1,0 +1,5 @@
+[source_pdf: Resting_Well_.txt] [therapy_type: CBT] [subtype: Sleep Psychoeducation (“Resting Well”)] [audience: General Adult] [language: en]
+Resting_Well_
+sleepy
+= sleep. If we go to bed when we’re just tired it can take a while to drop off and that vicious cycle can creep in,
+strengthening bed = wakefulness. 21 22

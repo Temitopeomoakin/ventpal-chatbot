@@ -1,0 +1,8 @@
+[source_pdf: ocd-workbook_final.txt] [therapy_type: CBT] [subtype: OCD Self-Help Workbook] [audience: General Adult] [language: en]
+ocd-workbook_final
+Facing your fears
+What do you think would happen?
+The process in which we change behaviour is called exposure and has been shown to be an effective form of treatment for OCD.
+Exposure response prevention is the process in which we face our fears without engaging in our compulsive behaviours.
+Most people think that if they did not carry out their compulsive behaviours their anxiety would just keep rising until eventually something catastrophic happens, for example someone being harmed. Because of this, they carry out their compulsions and their anxiety drops right down. This works well in the short term but then the next time you have an obsessional thought, your anxiety is just as high as it was last time, if not higher. The doubts will creep back in and the whole process starts again.
+10

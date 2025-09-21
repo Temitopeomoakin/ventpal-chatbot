@@ -1,0 +1,13 @@
+[source_pdf: IAPT-BAME-PPG-2019.txt] [therapy_type: Practice] [subtype: BAME Service User Positive Practice Guide] [audience: BAME communities] [language: en]
+IAPT-BAME-PPG-2019
+INTRODUCTION: THE NEED FOR CULTURALLY ADAPTED AND
+CULTURALLY RESPONSIVE SERVICES
+The Improving Access to Psychological Therapies (IAPT) programme has made unprecedented progress towards meeting the considerable unmet need for therapies for common mental health problems and the success of this programme is internationally recognised (Bartram 2019). People from all communities have benefited from increased availability of evidence-based therapies; however, in England, members of Black Asian and Minority Ethnic (BAME) communities with mental health problems are currently less likely to access therapy, less likely to have good outcomes and more likely to report negative experiences in therapy, compared to white majority service users (Mercer et al. 2018, Crawford et al. 2016). This is despite decades of awarenessraising regarding the need to achieve equality of access and treatment outcomes (Department of Health 2005). These principles are clearly embedded in the Health and Social Care Act (2012)
+and the NHS Constitution (2012). Recent data from the IAPT programme (Baker 2018) suggest that, compared to people from white backgrounds, people from most BAME communities are:
+• less likely to use IAPT services (13% of IAPT referrals are from BAME groups whilst 20%
+of England’s population are from BAME groups)
+• less likely to complete treatment (46% of White service users complete treatment compared to 40% of Asian service users)
+• less likely to reliably improve (66% of White service users reliably improve compared to
+61% of Asian service users)
+• less likely to achieve full recovery (50% of White service users achieve full recovery compared to 44% of Asian service users)
+While this is the case for the majority of service users from BAME communities, it is not generalizable to all communities. For example, the improvement and recovery rates for Chinese service users are better than those of white service users. There is a clear legislative duty on the part of mental health services to provide equality of access for all communities within their catchment area (Equality Act 2010).

@@ -1,0 +1,5 @@
+[source_pdf: CaCBT for South Asians manual ENG.txt] [therapy_type: CaCBT] [subtype: South Asian Adapted CBT] [audience: South Asian diaspora] [language: en]
+CaCBT for South Asians manual ENG
+However,
+these earlier guidelines merely described the therapists’ personal experiences working with Latinx and Chinese patients. Furthermore, the guidelines did not directly result from research addressing cultural factors and, as far as we know, did not form the basis of adapted therapy that had passed the test of randomized controlled trials (RCTs). The literature on culturally informed guidance for cognitive therapists is generally limited [24]. Evidence for the Effectiveness of Culturally Adapted CBT
+Culturally adapted Cognitive Behavioural Therapy (CaCBT) is an evidence-based practice [33, 34]. CaCBT is more effective than standard CBT and has been demonstrated to reduce therapy dropouts compared to traditional CBT [32, 35]. Thus, CaCBT can increase access to mental health services and improve outcomes for immigrant, refugee, and racialized populations [36, 37, 38]. | 11

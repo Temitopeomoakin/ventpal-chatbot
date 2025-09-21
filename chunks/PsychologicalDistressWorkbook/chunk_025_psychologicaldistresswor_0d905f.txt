@@ -1,0 +1,4 @@
+[source_pdf: PsychologicalDistressWorkbook.txt] [therapy_type: DBT] [subtype: Distress Tolerance Skills (DBT-informed)] [audience: General Adult] [language: en]
+PsychologicalDistressWorkbook
+My rational mind My wise mind My emotional mind
+28

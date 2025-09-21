@@ -1,0 +1,12 @@
+[source_pdf: sleeprestrictionworkbook_final.txt] [therapy_type: CBT] [subtype: Sleep Restriction Therapy] [audience: General Adult] [language: en]
+sleeprestrictionworkbook_final
+Improving your sleep
+Step 2. Review sleep efficiency
+Once you have completed your sleep diary,
+your therapist will talk you through how to calculate your sleep efficiency.
+We would recommend that you ask your therapist for a copy of the sleep efficiency spreadsheet so that you can continue to work out your sleep efficiency once your treatment has ended.
+Sleep efficiency below 85%
+If your therapist has determined your sleep efficiency is below 85%, they will suggest you continue to Step 3 on the next page.
+Sleep efficiency above 85%
+If your sleep efficiency is above 85%, we would consider your sleep to be efficient enough already and therefore your therapist will discuss with you whether sleep restriction is needed at this stage.
+11

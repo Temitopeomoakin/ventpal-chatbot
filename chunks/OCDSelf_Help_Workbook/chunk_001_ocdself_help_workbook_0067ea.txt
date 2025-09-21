@@ -1,0 +1,5 @@
+[source_pdf: OCDSelf_Help_Workbook.txt] [therapy_type: CBT] [subtype: OCD Self-Help Workbook (Alternate)] [audience: General Adult] [language: en]
+OCDSelf_Help_Workbook
+Obsessive Compulsive Disorder:
+A Self-Help Book
+Karina Lovell and Lina Gega

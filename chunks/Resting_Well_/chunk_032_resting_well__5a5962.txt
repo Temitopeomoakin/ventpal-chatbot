@@ -1,0 +1,16 @@
+[source_pdf: Resting_Well_.txt] [therapy_type: CBT] [subtype: Sleep Psychoeducation (“Resting Well”)] [audience: General Adult] [language: en]
+Resting_Well_
+Resting Well: Steps to a Good Night’s Sleep
+Putting Sleep Changes into Action: Sleep Restriction
+Week commencing:
+You’ll need to use your completed sleep diary to help you fill out this worksheet. Calculate your average weekly Total Sleep Time (TST) by adding up how many hours you’ve slept over the last seven days and dividing this by seven, put this in the box below. Then calculate your new Time in Bed prescription (TIB) by adding 30 minutes to your average weekly Total Sleep Time,
+write this in the box below. Average
+Time in Bed weekly Total prescription:
+Sleep Time:
+Your Time in Bed prescription is the amount of time you’ll need to spend in bed over the next week. Record what time you want to wake up (keep this consistent) and then take away your Time in Bed prescription from this to work out what time you need to go to bed. Wake time: Bed time:
+Over the next week stick to your bed time and wake time as recorded above, keep filling out the sleep diary making sure to track your Total Sleep Time. Use this worksheet to think about whether anything will get in the way of sticking to your bed and wake times, what might help you overcome these? Potential barriers to my planned bed What might help me to overcome these and wake times: barriers? After a week of going to bed and waking up at your ned bed and wake times, calculate your sleep efficiency to see if you should adjust your TIB prescription. Firstly you will need to re-calculate your average weekly TST based on your most recent sleep diary, then calculate sleep efficiency using the following formula:
+(Average weekly TST ÷ TIB prescription) x 100
+Average
+TIB weekly ÷ = x100 prescription
+TST
+This should give you a percentage.

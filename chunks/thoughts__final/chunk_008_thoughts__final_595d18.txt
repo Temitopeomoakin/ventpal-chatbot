@@ -1,0 +1,6 @@
+[source_pdf: thoughts__final.txt] [therapy_type: CBT] [subtype: Cognitive Restructuring (“Thoughts”)] [audience: General Adult] [language: en]
+thoughts__final
+Thought diary
+Automatic thoughts/predictions Mood Negative
+Situation
+(Belief 0-100%) (0-100%) thinking style e.g. Didn’t meet target at work “I'm a failure” (80%) Anxious (70%) Labelling

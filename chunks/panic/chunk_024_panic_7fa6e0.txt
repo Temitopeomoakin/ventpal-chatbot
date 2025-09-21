@@ -1,0 +1,6 @@
+[source_pdf: panic.txt] [therapy_type: CBT] [subtype: Panic Self-Help Leaflet] [audience: General Adult] [language: en]
+panic
+My graded hierarchy
+Fill in the blank graded hierarchy below.
+Situations Anxiety (0-100)
+24

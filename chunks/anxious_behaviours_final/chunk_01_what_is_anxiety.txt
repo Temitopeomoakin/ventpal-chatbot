@@ -1,0 +1,24 @@
+[therapy_type: CBT] [subtype: Anxiety Psychoeducation] [source: anxious-behaviours_final.txt]
+
+
+What is anxiety?
+Anxiety occurs when we perceive a situation or
+object as threatening and we don’t feel we have
+the skills we need to cope with it.
+If something causes us to feel afraid or scared, then this
+can induce physical symptoms known as the ‘fight or
+flight’ response.
+This a response that has evolved to protect us from danger
+and includes symptoms such as increased heart rate,
+feeling hot and feeling a surge of adrenaline, among others.
+These physical symptoms occur to help us either run away
+from danger or to prepare to fight it.
+The ‘fight or flight’ response is helpful if we are faced with
+real danger but for most of us our daily lives do not present
+us with life-threatening situations.
+When we are faced with any situation that we don’t feel
+prepared to deal with, the ‘fight or flight’ response can
+become activated. If the situation is not physically
+threatening (e.g. giving a presentation to a large group of
+people) this response is not helpful for coping with the
+situation, and can actually be quite frightening.

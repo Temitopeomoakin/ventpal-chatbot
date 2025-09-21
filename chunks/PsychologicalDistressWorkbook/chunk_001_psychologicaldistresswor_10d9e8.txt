@@ -1,0 +1,9 @@
+[source_pdf: PsychologicalDistressWorkbook.txt] [therapy_type: DBT] [subtype: Distress Tolerance Skills (DBT-informed)] [audience: General Adult] [language: en]
+PsychologicalDistressWorkbook
+This workbook can be used on its own, within our workshops, or to refresh your skills after completing our Psychological Distress workshop.
+It can be completed on your own or with someone you trust such as a healthcare professional, friend or family member.
+If you feel things are getting worse when you are using this workbook,
+please get in touch with your mental health team or your GP. If you feel you are in crisis, please call the CWP crisis line number which is
+0800 145 6485 (for residents of Cheshire East, Cheshire West and
+Wirral, of all ages).
+6

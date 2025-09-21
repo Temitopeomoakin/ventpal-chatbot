@@ -1,0 +1,21 @@
+[source_pdf: ocd-workbook_final.txt] [therapy_type: CBT] [subtype: OCD Self-Help Workbook] [audience: General Adult] [language: en]
+ocd-workbook_final
+Intrusive thought Female Male
+Exposing self in public 9% 21%
+Acts against sexual preference 19% 20%
+Catching sexually transmitted disease 60% 43%
+Getting fatal disease from strangers 22% 19%
+Giving fatal disease to strangers 25% 17%
+Giving everything away 52% 43%
+Removing all dust from the floor 35% 24%
+Removing dust from unseen places 41% 29%
+Contamination from doors 35% 24%
+Contamination from phones 28% 18%
+Scratching car paint 26% 43%
+Throwing something 28% 26%
+Breaking window 26% 43%
+Leaving home unlocked 77% 69%
+Leaving taps on and flooding the house 28% 24%
+Remember, these are percentages of people having intrusive thoughts without having
+OCD. Look at this when you experience an intrusive thought and see how many others experience it as well.
+8

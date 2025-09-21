@@ -1,0 +1,4 @@
+[source_pdf: Managing_Your_Worries.txt] [therapy_type: CBT] [subtype: Worry Management] [audience: General Adult] [language: en]
+Managing_Your_Worries
+For example, rather than “I will ask my colleagues what they think about my performance at work less often.” think about what you might do instead. For example, “I will ensure I only seek feedback on my performance at work from my line manager during my monthly performance review”. Or, rather than “I will stop putting doing things off at work”, think about some of the benefits you may have from achieving this goal. For example, “I will strive to get on with more things I am given to do at work, and see how far I get with them before seeking any help if I need it.”
+14 15

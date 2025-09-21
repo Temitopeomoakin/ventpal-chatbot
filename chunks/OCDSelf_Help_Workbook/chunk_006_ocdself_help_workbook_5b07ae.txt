@@ -1,0 +1,5 @@
+[source_pdf: OCDSelf_Help_Workbook.txt] [therapy_type: CBT] [subtype: OCD Self-Help Workbook (Alternate)] [audience: General Adult] [language: en]
+OCDSelf_Help_Workbook
+1. What do you think caused your OCD?
+2. What do you think has maintained your OCD?
+9

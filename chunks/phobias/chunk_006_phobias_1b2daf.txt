@@ -1,0 +1,9 @@
+[source_pdf: phobias.txt] [therapy_type: CBT] [subtype: Phobia Self-Help] [audience: General Adult] [language: en]
+phobias
+My vicious cycle of avoidance
+Complete the below diagram to explore how your phobia impacts you:
+Trigger
+Thoughts
+Feelings Physical sensations
+Behaviours
+8

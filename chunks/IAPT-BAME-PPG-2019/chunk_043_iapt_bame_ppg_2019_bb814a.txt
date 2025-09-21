@@ -1,0 +1,4 @@
+[source_pdf: IAPT-BAME-PPG-2019.txt] [therapy_type: Practice] [subtype: BAME Service User Positive Practice Guide] [audience: BAME communities] [language: en]
+IAPT-BAME-PPG-2019
+In areas with small BAME communities, it might be more helpful to collapse ethnic categories (for example, considering Black African communities rather than each nationality). Once a clear picture has been achieved, the ethnic composition of referrals to the service and of attendance rates can be compared with these figures. This can be an invaluable way of establishing which, if any, communities are under-represented in the service, information which should form the basis of an action plan to ensure equality of access. One barrier to this process may be that the ethnicity of existing service users is not accurately collected by services as part of the IAPT data set. An audit of ethnicity on the service information
+27

@@ -1,0 +1,8 @@
+[source_pdf: OCDSelf_Help_Workbook.txt] [therapy_type: CBT] [subtype: OCD Self-Help Workbook (Alternate)] [audience: General Adult] [language: en]
+OCDSelf_Help_Workbook
+WEEKLY GOALS
+Goal 1: Goal 2:
+Anxiety: rate how anxious you felt before and after you did the task using the rating scale below.
+0 2 4 6 8 no little moderate much extreme anxiety anxiety anxiety anxiety anxiety
+Goals I completed Anxiety before Anxiety after
+27

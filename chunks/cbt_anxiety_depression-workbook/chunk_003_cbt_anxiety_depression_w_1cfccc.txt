@@ -1,0 +1,11 @@
+[source_pdf: cbt_anxiety_depression-workbook.txt] [therapy_type: CBT] [subtype: General Anxiety & Depression Skills] [audience: General Adult] [language: en]
+cbt_anxiety_depression-workbook
+Hot cross bun
+The way you think about a problem (thoughts), can affect how your body reacts (physically) and emotionally (feelings). It can also alter how you might act in response to that trigger (behaviour).
+A simple way of showing this process is in the ‘hot cross bun’ diagram below, which gets its name due to the cross in the middle and the round shape.
+Trigger
+Thoughts
+Feelings Physical
+Behaviours
+Try creating your own hot cross bun on page 13.
+6
